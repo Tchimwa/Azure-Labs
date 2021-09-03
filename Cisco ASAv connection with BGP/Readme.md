@@ -1,4 +1,4 @@
-# Azure VPN connection with a Cisco ASAv  with BGP
+# Azure VPN connection with a Cisco ASAv using BGP
 
 This lab puts into practice a VPN connection between Azure and a Cisco ASAv using BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity.
 I would like to mention that this lab is only used for testing and learning purposes.
@@ -31,7 +31,7 @@ az network vnet subnet create --resource-group vpn-rg --name GatewaySubnet --vne
 az network vnet subnet create --resource-group vpn-rg --name Servers --vnet-name Azure --address-prefix 192.168.2.0/24 --network-security-group vm-nsg
 </pre>
 
-### 2. Create the Azure VPN Gateway that will be used for the connection 
+### 2. Create the Azure VPN Gateway that will be used for the connection with the BGP configuration
 
 <pre lang=" Azure-cli">
 az network public-ip create --resource-group vpn-rg --name vpngw-pip --allocation-method Dynamic
@@ -50,56 +50,81 @@ As we set up the Azure environment, the entire customer environment will be host
 az group create --name onprem-rg --location eastus2
 </pre>
 
-### 1. Create and configure the Onprem VNET
+### 1. Create and configure the Onpremises VNET emulating the customer's onprem network infrastructure
 
+<pre lang=" Azure-cli">
 az network nsg create --name asa-nsg --resource-group onprem-rg --location eastus2 
-az network nsg rule create --name Allow-NSG --nsg-name asa-nsg --resource-group onprem-rg --access Allow --description "Allow RDP to the ASA VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
+az network nsg rule create --name Allow-NSG --nsg-name asa-nsg --resource-group onprem-rg --access Allow --description "Allowing SSH to the VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 22
 
 az network vnet create --resource-group onprem-rg --location eastus2 --name On-premises --address-prefix 172.16.0.0/16 --subnet-name Outside --subnet-prefix 172.16.0.0/24
 az network vnet subnet create --resource-group onprem-rg --name Inside --vnet-name On-premises --address-prefix 172.16.1.0/24 --network-security-group asa-nsg
 az network vnet subnet create --resource-group onprem-rg --name VM --vnet-name On-premises --address-prefix 172.16.2.0/24 --network-security-group asa-nsg
+</pre>
 
-### 2. Create the Cisco ASA
+### 2. Create the Cisco ASAv
 
-#### - Grab the latest version of the Cisco ASAv
+#### - Get the versions of the Cisco ASAv available on Azure
 
+<pre lang=" Azure-cli">
 az vm image list --all --publisher cisco --offer cisco-asav --query "[?sku=='asav-azure-byol'].version" -o tsv
-
+</pre>
 #### - Verify the version of the cisco ASA (Optional):
 
+<pre lang=" Azure-cli">
 az vm image show --location eastus2 --urn cisco:cisco-asav:asav-azure-byol:9142215.0.0
+</pre>
+#### - Accept the licensing terms and conditions:
 
-#### - Accept the licensing terms and condiftions:
+Before using the Cisco ASAv product from Cisco, you might have to accept the licensing terms and conditions established.
 
+<pre lang=" Azure-cli">
 az vm image terms accept --urn cisco:cisco-asav:asav-azure-byol:9142215.0.0
+</pre>
 
+#### Creating the Cisco ASAv with only 2 interfaces for our configuration, it can have more depending on your choice of deployment.
+
+<pre lang=" Azure-cli">
 az network public-ip create --name asav-pip --resource-group onprem-rg --idle-timeout 30 --allocation-method Static
 
 az network nic create --name asanicOut01 --resource-group onprem-rg --vnet On-premises --subnet Outside --public-ip-address asav-pip --private-ip-address 172.16.0.4 --ip-forwarding
 az network nic create --name asanicIn01 --resource-group onprem-rg --vnet On-premises --subnet Inside --private-ip-address 172.16.1.4 --ip-forwarding
 
-az vm create --resource-group onprem-rg --location eastus2 --name asav01 --size Standard_D3_v2 --nics asanicOut01 asanicIn01--image cisco:cisco-asav:asav-azure-byol:9142215.0.0 --admin-username azure --admin-password Networking2021#
+az vm create --resource-group onprem-rg --location eastus2 --name asav01 --size Standard_D3_v2 --nics asanicOut01 asanicIn01 --image cisco:cisco-asav:asav-azure-byol:9142215.0.0 --admin-username azure --admin-password Networking2021#
+</pre>
 
-3. Obtain the ASAv public IP addresses and the BGP parameters of the VPN GW
+### 3. Get the ASAv and the Azure GW public IP address, also the BGP parameters of the VPN GW
 
+We will be using those parameters to set up the local network Gateway and also to configure the Cisco ASA onpremises
+
+<pre lang=" Azure-cli">
 az network public-ip show --resource-group onprem-rg --name asav-pip --query "{address: ipAddress}"
+az network public-ip show --resource-group vpn-rg --name vpngw-pip-pip --query "{address: ipAddress}"
 
 az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPeeringAddress] -o table --resource-group vpn-rg
+</pre>
 
-Part 3: Establish an active-active cross-premises connection
+## Part 3: Establish the IPSec VPN connection
 
-0. Creating the local network gateways
+### 0. Creating the local network gateway
 
+<pre lang=" Azure-cli">
 az network local-gateway create --gateway-ip-address ***asav-pip*** --name az-lng --resource-group vpn-rg --asn 65015 --bgp-peering-address 1.1.1.1
+</pre>
 
-1.  Establish the connections from Azure to On-premises
+### 1.  Create the connection from Azure to On-premises
 
+#### - Create the connection using the local network gateway configuration and the VPN GW
+<pre lang=" Azure-cli">
 az network vpn-connection create --name Az-to-Onprem --resource-group vpn-rg --vnet-gateway1 Azure-GW --location eastus --shared-key Networking2021# --local-gateway2 az-lng --enable-bgp
+</pre>
+#### - Due to some reasons, we may be forced to changes the parameters of our connexion as you can see on the pic below. In this case, DH Group 2 which is send by default by Azure is getting deprecated from the future cisco ASAv versions, so we change the configuration to use the DH Group 14. 
 
-Part 4. Set up the Cisco ASA
+![DH Group 14 - Custom policy](https://user-images.githubusercontent.com/56332566/131965511-7b4d8abf-074f-4f26-a289-a5f61dd929dc.jpg)
+
+## Part 4. Set up the Cisco ASA
 SSH to ASA management address and paste in the below configuration in config mode.
-0.  Addressing the interfaces 
-
+### 0.Addressing the interfaces 
+<pre lang="cli">
 interface GigabitEthernet0/0
  nameif Inside
  security-level 100
@@ -110,8 +135,9 @@ interface Management0/0
  nameif Outside
  security-level 0
 !
-1. Enable IKEv2 on the outside interface and configure the IKEv2 policy
-
+</pre>
+### 1. Enable IKEv2 on the outside interface and configure the IKEv2 policy
+<pre lang="cli">
 crypto ikev2 enable Outside
 crypto ikev2 notify invalid-selectors
 
@@ -121,9 +147,11 @@ crypto ikev2 policy 10
  group 2 14
  prf  sha512 sha384 sha256 sha
  lifetime seconds 28800
+ !
+ </pre>
 
-2. Configure an IPsec transform set and an IPsec profile
-
+### 2. Configure an IPsec Proposal and profile
+<pre lang="cli">
 crypto ipsec ikev2 ipsec-proposal Azure-IpSec-Proposal
  protocol esp encryption aes-256
  protocol esp integrity sha-256
@@ -132,9 +160,10 @@ crypto ipsec profile Azure-IpSec-Profile
  set ikev2 ipsec-proposal Azure-IpSec-Proposal
  set security-association lifetime kilobytes unlimited
  set security-association lifetime seconds 27000
-   
-3. Configure the tunnel interfaces
-
+ !
+</pre>   
+### 3. Configure the tunnel interfaces
+<pre lang="cli">
 interface Tunnel10
  nameif  Omprem-to-Az
  ip address 1.1.1.1 255.255.255.252 
@@ -144,8 +173,9 @@ interface Tunnel10
  tunnel protection ipsec profile Azure-IpSec-Profile
  no shut
 !
-4. Configure the tunnel group
-
+</pre>
+###4. Configure the tunnel group
+<pre lang="cli">
 group-policy AzGroup internal
 group-policy AzGroup attributes
  vpn-tunnel-protocol ikev2 
@@ -157,9 +187,9 @@ tunnel-group ***Azure-GW Public IP*** ipsec-attributes
  ikev2 local-authentication pre-shared-key Networking2021#
 no tunnel-group-map enable peer-ip
 tunnel-group-map default-group ***Azure-GW Public IP***
+</pre>
 
-
-5. Configure dynamic routing
+### 5. Configure dynamic routing
 
 route Inside 172.16.2.0 255.255.255.0 172.16.1.1 1
 route Onprem-to-AZ 192.168.0.254 255.255.255.255 1.1.1.0 1
