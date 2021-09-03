@@ -7,7 +7,7 @@ The configurations have been done using Azure CLI for the Azure part. When it co
 ## Part 1 - Create and configure the Azure environment
 
 ### 0. Create the resource group
-The resource below will host all the resources reprenting the Azure environment in our infrastructure.
+The resource group below will host all the resources reprenting the Azure environment in our infrastructure.
 
 <pre lang=" Azure-cli"> 
  az group create --name vpn-rg --location eastus
