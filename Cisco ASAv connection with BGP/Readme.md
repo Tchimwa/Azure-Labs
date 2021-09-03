@@ -4,6 +4,13 @@ This lab puts into practice a VPN connection between Azure and a Cisco ASAv with
 I would like to mention that this lab is only used for testing and learning purposes.
 The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we use the CLI and the commands are shown below.
 
+## Topology 
+
+We have added a Spoke VNET to experience the automatic routing update happening on the VPN Gateway.
+
+![Azure VPN with ASAv](https://user-images.githubusercontent.com/56332566/131960536-5668ca2e-fd2d-4c73-a180-f7d36246a2ed.PNG)
+
+
 ## Part 1 - Create and configure the Azure environment
 
 ### 0. Create the resource group
