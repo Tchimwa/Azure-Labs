@@ -4,13 +4,14 @@ This lab puts into practice a VPN connection between Azure and a Cisco ASAv with
 I would like to mention that this lab is only used for testing and learning purposes.
 The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we use the CLI and the commands are shown below.
 
-## Part 1 - Create and configure active-active VPN gateways on Azure**
+## Part 1 - Create and configure active-active VPN gateways on Azure
 
-0. Create the resource group
+### 0. Create the resource group
+<pre lang=" Azure-cli"> 
+ az group create --name vpn-rg --location eastus
+</pre>
 
-az group create --name vpn-rg --location eastus
-
-1. Create and configure the Azure VNET
+### 1. Create and configure the Azure VNET
 
 az network nsg create --name vm-nsg --resource-group vpn-rg --location eastus
 az network nsg rule create --name Allow-NSG --nsg-name vm-nsg --resource-group vpn-rg --access Allow --description "Allow SSH to the ASA VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
@@ -19,19 +20,19 @@ az network vnet create --resource-group vpn-rg --location eastus --name Azure --
 az network vnet subnet create --resource-group vpn-rg --name GatewaySubnet --vnet-name Azure --address-prefix 192.168.0.0/24
 az network vnet subnet create --resource-group vpn-rg --name Servers --vnet-name Azure --address-prefix 192.168.2.0/24 --network-security-group vm-nsg
 
-2. Create the VPN GW 
+### 2. Create the VPN GW 
 
 az network public-ip create --resource-group vpn-rg --name vpngw-pip --allocation-method Dynamic
 
 az network vnet-gateway create --name Azure-GW --public-ip-addresses vpngw-pip --resource-group vpn-rg --vnet Azure --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1 --asn 65010 --bgp-peering-address 192.168.0.254 --no-wait
 
-Part 2 - Create and configure the Cisco ASA and the On-premises VNET
+## Part 2 - Create and configure the Cisco ASA and the On-premises VNET
 
-0. Create the resource group for on-prem:
+### 0. Create the resource group for on-prem:
 
 az group create --name onprem-rg --location eastus2
 
-1. Create and configure the Onprem VNET
+### 1. Create and configure the Onprem VNET
 
 az network nsg create --name asa-nsg --resource-group onprem-rg --location eastus2 
 az network nsg rule create --name Allow-NSG --nsg-name asa-nsg --resource-group onprem-rg --access Allow --description "Allow RDP to the ASA VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
@@ -40,17 +41,17 @@ az network vnet create --resource-group onprem-rg --location eastus2 --name On-p
 az network vnet subnet create --resource-group onprem-rg --name Inside --vnet-name On-premises --address-prefix 172.16.1.0/24 --network-security-group asa-nsg
 az network vnet subnet create --resource-group onprem-rg --name VM --vnet-name On-premises --address-prefix 172.16.2.0/24 --network-security-group asa-nsg
 
-2. Create the Cisco ASA
+### 2. Create the Cisco ASA
 
-- Grab the latest version of the Cisco ASAv
+#### - Grab the latest version of the Cisco ASAv
 
 az vm image list --all --publisher cisco --offer cisco-asav --query "[?sku=='asav-azure-byol'].version" -o tsv
 
-- Verify the version of the cisco ASA (Optional):
+#### - Verify the version of the cisco ASA (Optional):
 
 az vm image show --location eastus2 --urn cisco:cisco-asav:asav-azure-byol:9142215.0.0
 
-- Accept the licensing terms and condiftions:
+#### - Accept the licensing terms and condiftions:
 
 az vm image terms accept --urn cisco:cisco-asav:asav-azure-byol:9142215.0.0
 
