@@ -119,7 +119,7 @@ az network vpn-connection create --name Az-to-Onprem --resource-group vpn-rg --v
 </pre>
 #### - Due to some reasons, we may be forced to changes the parameters of our connexion as you can see on the pic below. In this case, DH Group 2 which is send by default by Azure is getting deprecated from the future cisco ASAv versions, so we change the configuration to use the DH Group 14. 
 
-![DH Group 14 - Custom policy](https://user-images.githubusercontent.com/56332566/131965511-7b4d8abf-074f-4f26-a289-a5f61dd929dc.jpg)
+![DH Group 14 - Custom policy](https://github.com/Tchimwa/Azure-Labs/blob/main/Cisco%20ASAv%20connection%20with%20BGP/DH%20Group%2014%20-%20Custom%20policy.jpg)
 
 ## Part 4. Set up the Cisco ASA
 SSH to ASA management address and paste in the below configuration in config mode.
@@ -167,14 +167,14 @@ crypto ipsec profile Azure-IpSec-Profile
 interface Tunnel10
  nameif  Omprem-to-Az
  ip address 1.1.1.1 255.255.255.252 
- tunnel source interface Management ( Here it is the default interface to Internet)
+ tunnel source interface Outside
  tunnel destination ***Azure-GW Public IP***
  tunnel mode ipsec ipv4
  tunnel protection ipsec profile Azure-IpSec-Profile
  no shut
 !
 </pre>
-###4. Configure the tunnel group
+### 4. Configure the tunnel group
 <pre lang="cli">
 group-policy AzGroup internal
 group-policy AzGroup attributes
@@ -189,8 +189,8 @@ no tunnel-group-map enable peer-ip
 tunnel-group-map default-group ***Azure-GW Public IP***
 </pre>
 
-### 5. Configure dynamic routing
-
+### 5. Configure dynamic routing with BGP
+<pre lang="cli">
 route Inside 172.16.2.0 255.255.255.0 172.16.1.1 1
 route Onprem-to-AZ 192.168.0.254 255.255.255.255 1.1.1.0 1
 
@@ -208,31 +208,40 @@ router bgp 65015
   redistribute connected
  exit-address-family
 !
-Part 5.  Create the VM for testing 
-0. Azure VM
+</pre>
+## Part 5.  Create the VMs for testing 
 
+### 0. Create Azure Hub VM
+
+<pre lang="Azure-cli">
 az network public-ip create --name azvm-pip --resource-group vpn-rg --location eastus --allocation-method Dynamic
 az network nic create --resource-group vpn-rg --name azvmnic01 --location eastus --subnet Servers --private-ip-address 192.168.2.100 --vnet-name Azure --public-ip-address azvm-pip
 az vm create --name AzVM --resource-group vpn-rg --location eastus --image Win2012R2Datacenter --admin-username azure --admin-password Networking2021# --nics azvmnic01
+</pre>
 
-1. On-premises VM
+### 1. On-premises VMs
 
+#### - Inside VM 
+<pre lang="Azure-cli">
 az network public-ip create --name insidevm-pip --resource-group onprem-rg --location eastus2 --allocation-method Dynamic
 az network nic create --resource-group onprem-rg --name insidevmnic01 --location eastus2 --subnet Inside --private-ip-address 172.16.1.100 --vnet-name On-premises --public-ip-address insidevm-pip
-az vm create --name Inside-VM --resource-group onprem-rg --location eastus2 --image Win2012R2Datacenter --admin-username azure --admin-password Networking2021# --nics insidevmnic01
+az vm create --name Inside-VM --resource-group onprem-rg --location eastus2 --image UbuntuLTS --admin-username azure --admin-password Networking2021# --nics insidevmnic01
+</pre>
 
+#### - Onprem-VM
+<pre lang="Azure-cli">
 az network public-ip create --name onpremvm-pip --resource-group onprem-rg --location eastus2 --allocation-method Dynamic
 az network nic create --resource-group onprem-rg --name onpremvmnic01 --location eastus2 --subnet VM --private-ip-address 172.16.2.100 --vnet-name On-premises --public-ip-address onpremvm-pip
-az vm create --name Onprem-VM --resource-group onprem-rg --location eastus2 --image Win2012R2Datacenter --admin-username azure --admin-password Networking2021# --nics onpremvmnic01
-
-2. Route table to direct the traffic to the ASAv
-
+az vm create --name Onprem-VM --resource-group onprem-rg --location eastus2 --image UbuntuLTS --admin-username azure --admin-password Networking2021# --nics onpremvmnic01
+</pre>
+### 2. Route table to direct the traffic to the ASAv
+<pre lang="Azure-cli">
 az network route-table create --name OnPrem-rt --resource-group onprem-rg
 az network route-table route create --name Onprem-rt --resource-group onprem-rg --route-table-name Azure-rt --address-prefix 192.16.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
 az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
-
-Part.6 Verification
+</pre>
+## Part.6 Verification
 
 0. On Azure 
 
