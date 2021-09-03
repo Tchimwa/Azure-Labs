@@ -81,7 +81,7 @@ Before using the Cisco ASAv product from Cisco, you might have to accept the lic
 az vm image terms accept --urn cisco:cisco-asav:asav-azure-byol:9142215.0.0
 </pre>
 
-#### Creating the Cisco ASAv with only 2 interfaces for our configuration, it can have more depending on your choice of deployment.
+#### - Creating the Cisco ASAv with only 2 interfaces for our configuration, it can have more depending on your choice of deployment.
 
 <pre lang=" Azure-cli">
 az network public-ip create --name asav-pip --resource-group onprem-rg --idle-timeout 30 --allocation-method Static
