@@ -7,8 +7,8 @@ The configurations have been done using Azure CLI for the Azure part. When it co
 ## Topology 
 
 We have added a Spoke VNET to experience the automatic routing update happening on the VPN Gateway.
-![ASAv VPN](https://user-images.githubusercontent.com/56332566/131960685-1d3b95d2-b97b-4fbd-a92b-869c34c5b4cf.jpg)
 
+![ASAv VPN](https://github.com/Tchimwa/Azure-Labs/blob/main/Cisco%20ASAv%20connection%20with%20BGP/ASAv%20VPN.jpg)
 
 ## Part 1 - Create and configure the Azure environment
 
