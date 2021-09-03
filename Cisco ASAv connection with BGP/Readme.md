@@ -243,20 +243,21 @@ az network vnet subnet update --name Inside --vnet-name On-premises --resource-g
 </pre>
 ## Part.6 Verification
 
-0. On Azure 
-
+### 0. From Azure 
+#### - The Status of the connection
+<pre lang="Azure-cli">
 az network vpn-connection show --name Az-to-Onprem --resource-group vpn-rg --query "{status: connectionStatus}"
-
-- The BGP routes learned
-
- az network vnet-gateway list-learned-routes -g vpn-rg -n Azure-GW -o table
-
- - The routes advertised
-
- az network vnet-gateway list-advertised-routes -g vpn-rg -n Azure-GW --peer 1.1.1.1 -o table
-
-1. From the Cisco ASA
-
+</pre>
+#### - The BGP routes learned by the Azure VPN Gateway
+<pre lang="Azure-cli">
+az network vnet-gateway list-learned-routes -g vpn-rg -n Azure-GW -o table
+</pre>
+#### - The routes advertised
+<pre lang="Azure-cli">
+az network vnet-gateway list-advertised-routes -g vpn-rg -n Azure-GW --peer 1.1.1.1 -o table
+</pre>
+### 1. From the Cisco ASAv
+<pre lang="Azure-cli">
 show crypto ikev2 sa
 
 show crypto ipsec sa
@@ -270,47 +271,54 @@ show bgp nei 192.168.0.254 routes
 show route
 
 debug icmp trace
+</pre>
 
-***Peering***
+## Part 7. The peering 
 
-1. Let's create a Azure-spoke VNET and peer it to the Azure VNET
-
+### 1. Let's create a Azure-spoke VNET and peer it to the Azure VNET
+<pre lang="Azure-cli">
 az network vnet create --resource-group vpn-rg --location eastus --name Azure-Spoke --address-prefixes 10.10.0.0/16 --subnet-name DevOps --subnet-prefix 10.10.0.0/24 --network-security-group vm-nsg
 az network vnet subnet create --resource-group vpn-rg --name PE --vnet-name Azure-Spoke --address-prefix 10.10.1.0/24
+</pre>
+### 2. The peerings
 
-2. The peerings
-
--  Get the ID of  both VNETs
-
+#### -  Get the ID of  both VNETs
+<pre lang="Azure-cli">
 SpokeId=$(az network vnet show --resource-group vpn-rg --name Azure-Spoke --query id --out tsv)
 HubId=$(az network vnet show --resource-group vpn-rg --name Azure --query id --out tsv)
-
-- Set up the peerings
-
+</pre>
+#### - Set up the peerings between the Azure and the Azure-Spoke VNETs
+<pre lang="Azure-cli">
 az network vnet peering create --name Spoke-to-Hub --resource-group vpn-rg --vnet-name Azure-Spoke --remote-vnet $HubId --allow-vnet-access --use-remote-gateways --allow-forwarded-traffic
 az network vnet peering create --name Hub-to-Spoke --resource-group vpn-rg --vnet-name Azure --remote-vnet #SpokeId --allow-forwarded-traffic --allow-vnet-access --allow-gateway-transit
-
-- Update the route table
-
+</pre>
+#### - Update the route table Azure-rt on the Onpremises environment
+<pre lang="Azure-cli">
 az network route-table route create --name Azure-Spoke-rt --resource-group onprem-rg --route-table-name Azure-rt --address-prefix 10.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
 az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Azure-rt
 az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Azure-rt
+</pre>
+### 3. Testing
 
-3. Testing
-
-- Spoke VM
-
+#### - Spoke VM to test the connectivity with the Onpremises network
+<pre lang="Azure-cli">
 az network public-ip create --name spokevm-pip --resource-group vpn-rg --location eastus --allocation-method Dynamic
 az network nic create --resource-group vpn-rg --name spokevmnic01 --location eastus --subnet DevOps --private-ip-address 10.10.0.100 --vnet-name Azure-Spoke --public-ip-address spokevm-pip
 az vm create --name Spoke-VM --resource-group vpn-rg --location eastus --image Win2012R2Datacenter --admin-username azure --admin-password Networking2021# --nics spokevmnic01
+</pre>
+#### - The BGP routes advertised by the Azure VPN Gateway
+<pre lang="Azure-cli">
+az network vnet-gateway list-advertised-routes -g vpn-rg -n Azure-GW --peer 1.1.1.1 -o table
 
-- az network vnet-gateway list-advertised-routes -g vpn-rg -n Azure-GW --peer 1.1.1.1 -o table
 Network         NextHop        Origin    AsPath    Weight
 --------------  -------------  --------  --------  --------
 192.168.0.0/16  192.168.0.254  Igp       65010     0
 10.10.0.0/16    192.168.0.254  Igp       65010     0
+</pre>
+#### - The BGP routes learned by the Azure VPN Gateway
+<pre lang="Azure-cli">
+az network vnet-gateway list-learned-routes -g vpn-rg -n Azure-GW -o table
 
-- az network vnet-gateway list-learned-routes -g vpn-rg -n Azure-GW -o table
 Network         Origin    SourcePeer     AsPath    Weight    NextHop
 --------------  --------  -------------  --------  --------  ---------
 192.168.0.0/16  Network   192.168.0.254            32768
@@ -320,8 +328,10 @@ Network         Origin    SourcePeer     AsPath    Weight    NextHop
 1.1.1.0/30      EBgp      1.1.1.1        65015     32768     1.1.1.1
 172.16.0.0/24   EBgp      1.1.1.1        65015     32768     1.1.1.1
 172.16.1.0/24   EBgp      1.1.1.1        65015     32768     1.1.1.1
-
-- asav01# show route
+</pre>
+#### - Route Table from the Cisco ASAv
+<pre lang="Azure-cli">
+asav01# show route
 
 Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
        D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area
@@ -344,3 +354,4 @@ L        172.16.1.4 255.255.255.255 is directly connected, Inside
 S        172.16.2.0 255.255.255.0 [1/0] via 172.16.1.1, Inside
 B        192.168.0.0 255.255.0.0 [20/0] via 192.168.0.254, 09:48:49
 S        192.168.0.254 255.255.255.255 [1/0] via 1.1.1.0, Onprem-to-AZ
+</pre>
