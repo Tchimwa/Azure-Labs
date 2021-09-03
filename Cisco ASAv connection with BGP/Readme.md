@@ -1,8 +1,8 @@
 # Azure VPN connection with a Cisco ASAv  with BGP
 
-This lab puts into practice a VPN connection between Azure and a Cisco ASAv with the BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity.
+This lab puts into practice a VPN connection between Azure and a Cisco ASAv using BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity.
 I would like to mention that this lab is only used for testing and learning purposes.
-The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we use the CLI and the commands are shown below.
+The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we are using the CLI and the commands are shown below.
 
 ## Topology 
 
@@ -13,32 +13,42 @@ We have added a Spoke VNET to experience the automatic routing update happening 
 ## Part 1 - Create and configure the Azure environment
 
 ### 0. Create the resource group
+
 The resource group below will host all the resources reprenting the Azure environment in our infrastructure.
 
 <pre lang=" Azure-cli"> 
  az group create --name vpn-rg --location eastus
 </pre>
 
-### 1. Create and configure the Azure VNET
+### 1. Create and configure the Azure VNET and the NSG with a security rule allowing the traffic on the port 3389 for testing purpose
 
+<pre lang=" Azure-cli">
 az network nsg create --name vm-nsg --resource-group vpn-rg --location eastus
-az network nsg rule create --name Allow-NSG --nsg-name vm-nsg --resource-group vpn-rg --access Allow --description "Allow SSH to the ASA VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
+az network nsg rule create --name Allow-NSG --nsg-name vm-nsg --resource-group vpn-rg --access Allow --description "Allowing RDP to the VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
 
 az network vnet create --resource-group vpn-rg --location eastus --name Azure --address-prefixes 192.168.0.0/16 --subnet-name Apps --subnet-prefix 192.168.1.0/24
 az network vnet subnet create --resource-group vpn-rg --name GatewaySubnet --vnet-name Azure --address-prefix 192.168.0.0/24
 az network vnet subnet create --resource-group vpn-rg --name Servers --vnet-name Azure --address-prefix 192.168.2.0/24 --network-security-group vm-nsg
+</pre>
 
-### 2. Create the VPN GW 
+### 2. Create the Azure VPN Gateway that will be used for the connection 
 
+<pre lang=" Azure-cli">
 az network public-ip create --resource-group vpn-rg --name vpngw-pip --allocation-method Dynamic
 
 az network vnet-gateway create --name Azure-GW --public-ip-addresses vpngw-pip --resource-group vpn-rg --vnet Azure --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1 --asn 65010 --bgp-peering-address 192.168.0.254 --no-wait
+</pre>
 
-## Part 2 - Create and configure the Cisco ASA and the On-premises VNET
+## Part 2 - Create and configure the Cisco ASAv and the On-premises VNET
+
+Here, we will be working on the onpremises entity. Most of the time, the Onpremises is the customer environment using his own VPN appliance, here a Cisco ASAv to connect to Azure.
 
 ### 0. Create the resource group for on-prem:
+As we set up the Azure environment, the entire customer environment will be host under the resource group "on-prem-rg". Here, we choose "East US 2" as the customer's location.
 
+<pre lang=" Azure-cli">
 az group create --name onprem-rg --location eastus2
+</pre>
 
 ### 1. Create and configure the Onprem VNET
 
