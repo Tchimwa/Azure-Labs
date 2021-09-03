@@ -1,10 +1,10 @@
-********************** Azure VPN connection with a Cisco ASA****************************
+# Azure VPN connection with a Cisco ASA
 
 This lab puts into practice a VPN connection between Azure and a Cisco ASAv with the BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity.
 I would like to mention that this lab is only used for testing and learning purposes.
 The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we use the CLI and the commands are shown below.
 
-***Part 1 - Create and configure active-active VPN gateways on Azure ***
+**Part 1 - Create and configure active-active VPN gateways on Azure**
 
 0. Create the resource group
 
