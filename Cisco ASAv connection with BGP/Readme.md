@@ -1,4 +1,4 @@
-# Azure VPN connection with a Cisco ASAv using BGP
+# VPN connection between Azure and a Cisco ASAv with BGP
 
 This lab puts into practice a VPN connection between Azure and a Cisco ASAv using BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity.
 I would like to mention that this lab is only used for testing and learning purposes.
