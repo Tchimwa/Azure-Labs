@@ -68,7 +68,7 @@ az network vnet subnet create --resource-group onprem-rg --name VM --vnet-name O
 <pre lang=" Azure-cli">
 az vm image list --all --publisher cisco --offer cisco-asav --query "[?sku=='asav-azure-byol'].version" -o tsv
 </pre>
-#### - Verify the version of the cisco ASA (Optional):
+#### - Verify the version of the cisco ASA (Optional). Here we choose to use the version 9.14 which is one of the most stable versions of the Cisco ASAv
 
 <pre lang=" Azure-cli">
 az vm image show --location eastus2 --urn cisco:cisco-asav:asav-azure-byol:9142215.0.0
@@ -275,7 +275,7 @@ debug icmp trace
 
 ## Part 7. The peering 
 
-The goal of this part is only to show how the route is getting added added automaticaticall on the VPN Gateway and propagated onpremises via BGP.
+The goal of this part is only to show you how a new route is getting added automaticatically to the VPN Gateway and propagated onpremises via BGP.
 
 ### 1. Let's create a Azure-spoke VNET and peer it to the Azure VNET
 <pre lang="Azure-cli">
