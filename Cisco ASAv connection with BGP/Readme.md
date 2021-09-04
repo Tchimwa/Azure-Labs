@@ -10,7 +10,7 @@ We have added a Spoke VNET to experience the automatic routing update happening 
 
 ![ASAv VPN](https://github.com/Tchimwa/Azure-Labs/blob/main/Cisco%20ASAv%20connection%20with%20BGP/ASAv%20VPN.jpg)
 
-## Part 1 - Create and configure the Azure environment
+## Part 1. Create and configure the Azure environment
 
 ### 0. Create the resource group
 
@@ -39,7 +39,7 @@ az network public-ip create --resource-group vpn-rg --name vpngw-pip --allocatio
 az network vnet-gateway create --name Azure-GW --public-ip-addresses vpngw-pip --resource-group vpn-rg --vnet Azure --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1 --asn 65010 --bgp-peering-address 192.168.0.254 --no-wait
 </pre>
 
-## Part 2 - Create and configure the Cisco ASAv and the On-premises VNET
+## Part 2. Create and configure the Cisco ASAv and the On-premises VNET
 
 Here, we will be working on the onpremises entity. Most of the time, the Onpremises is the customer environment using his own VPN appliance, here a Cisco ASAv to connect to Azure.
 
@@ -103,7 +103,7 @@ az network public-ip show --resource-group vpn-rg --name vpngw-pip-pip --query "
 az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPeeringAddress] -o table --resource-group vpn-rg
 </pre>
 
-## Part 3: Establish the IPSec VPN connection
+## Part 3. Establish the IPSec VPN connection
 
 ### 0. Creating the local network gateway
 
@@ -241,7 +241,7 @@ az network route-table route create --name Onprem-rt --resource-group onprem-rg 
 az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 </pre>
-## Part.6 Verification
+## Part 6. Verification
 
 ### 0. From Azure 
 #### - The Status of the connection
