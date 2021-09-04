@@ -275,6 +275,8 @@ debug icmp trace
 
 ## Part 7. The peering 
 
+The goal of this part is only to show how the route is getting added added automaticaticall on the VPN Gateway and propagated onpremises via BGP.
+
 ### 1. Let's create a Azure-spoke VNET and peer it to the Azure VNET
 <pre lang="Azure-cli">
 az network vnet create --resource-group vpn-rg --location eastus --name Azure-Spoke --address-prefixes 10.10.0.0/16 --subnet-name DevOps --subnet-prefix 10.10.0.0/24 --network-security-group vm-nsg
@@ -294,9 +296,9 @@ az network vnet peering create --name Hub-to-Spoke --resource-group vpn-rg --vne
 </pre>
 #### - Update the route table Azure-rt on the Onpremises environment
 <pre lang="Azure-cli">
-az network route-table route create --name Azure-Spoke-rt --resource-group onprem-rg --route-table-name Azure-rt --address-prefix 10.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
-az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Azure-rt
-az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Azure-rt
+az network route-table route create --name Azure-Spoke-rt --resource-group onprem-rg --route-table-name Onprem-rt --address-prefix 10.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
+az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
+az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 </pre>
 ### 3. Testing
 
