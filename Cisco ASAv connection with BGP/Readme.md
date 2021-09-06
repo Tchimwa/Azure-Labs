@@ -217,6 +217,7 @@ router bgp 65015
   network 172.16.2.0 mask 255.255.255.0
   no auto-summary
   no synchronization
+  redistribute static
   redistribute connected
  exit-address-family
 !
