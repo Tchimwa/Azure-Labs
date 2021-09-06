@@ -98,8 +98,8 @@ We will be using those parameters to set up the local network Gateway and also t
 
 <pre lang=" Azure-cli">
 az network public-ip show --resource-group onprem-rg --name asav-pip --query "{address: ipAddress}"
-az network public-ip show --resource-group vpn-rg --name vpngw-pip-pip --query "{address: ipAddress}"
 
+az network public-ip show --resource-group vpn-rg --name vpngw-pip --query "{address: ipAddress}"
 az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPeeringAddress] -o table --resource-group vpn-rg
 </pre>
 
@@ -121,20 +121,32 @@ az network vpn-connection create --name Az-to-Onprem --resource-group vpn-rg --v
 
 ![DH Group 14 - Custom policy](https://github.com/Tchimwa/Azure-Labs/blob/main/Cisco%20ASAv%20connection%20with%20BGP/DH%20Group%2014%20-%20Custom%20policy.jpg)
 
+Or you can use the CLI below to adjust the policy as well:
+<pre lang=" Azure-cli">
+az network vpn-connection ipsec-policy add --resource-group vpn-rg --connection-name Az-to-Onprem \
+    --dh-group DHGroup14 --ike-encryption AES256 --ike-integrity SHA1 --ipsec-encryption AES256 \
+    --ipsec-integrity SHA256 --pfs-group None --sa-lifetime 27000 --sa-max-size 102400000
+</pre>
 ## Part 4. Set up the Cisco ASA
 SSH to ASA management address and paste in the below configuration in config mode.
+<pre lang="...">
+login: azure
+Password: Networking2021#
+</pre>
 ### 0.Addressing the interfaces 
 <pre lang="cli">
 interface GigabitEthernet0/0
  nameif Inside
  security-level 100
+ no shut
  ip address 172.16.1.4 255.255.255.0
 !
 interface Management0/0
  no management-only
  nameif Outside
  security-level 0
-!
+ no shut
+exit
 </pre>
 ### 1. Enable IKEv2 on the outside interface and configure the IKEv2 policy
 <pre lang="cli">
@@ -143,11 +155,11 @@ crypto ikev2 notify invalid-selectors
 
 crypto ikev2 policy 10
  encryption aes-256 aes-192 aes
- integrity sha512 sha 384 sha256 sha
+ integrity sha512 sha384 sha256 sha
  group 2 14
  prf  sha512 sha384 sha256 sha
  lifetime seconds 28800
- !
+ exit
  </pre>
 
 ### 2. Configure an IPsec Proposal and profile
@@ -165,7 +177,7 @@ crypto ipsec profile Azure-IpSec-Profile
 ### 3. Configure the tunnel interfaces
 <pre lang="cli">
 interface Tunnel10
- nameif  Omprem-to-Az
+ nameif  Onprem-to-Az
  ip address 1.1.1.1 255.255.255.252 
  tunnel source interface Outside
  tunnel destination ***Azure-GW Public IP***
@@ -192,7 +204,7 @@ tunnel-group-map default-group ***Azure-GW Public IP***
 ### 5. Configure dynamic routing with BGP
 <pre lang="cli">
 route Inside 172.16.2.0 255.255.255.0 172.16.1.1 1
-route Onprem-to-AZ 192.168.0.254 255.255.255.255 1.1.1.0 1
+route Onprem-to-Az 192.168.0.254 255.255.255.255 1.1.1.0 1
 
 router bgp 65015
  bgp log-neighbor-changes
@@ -214,7 +226,7 @@ router bgp 65015
 ### 0. Create Azure Hub VM
 
 <pre lang="Azure-cli">
-az network public-ip create --name azvm-pip --resource-group vpn-rg --location eastus --allocation-method Dynamic
+az network public-ip create --name azvm-pip --resource-group vpn-rg --location eastus --allocation-method Static
 az network nic create --resource-group vpn-rg --name azvmnic01 --location eastus --subnet Servers --private-ip-address 192.168.2.100 --vnet-name Azure --public-ip-address azvm-pip
 az vm create --name AzVM --resource-group vpn-rg --location eastus --image Win2012R2Datacenter --admin-username azure --admin-password Networking2021# --nics azvmnic01
 </pre>
@@ -223,21 +235,21 @@ az vm create --name AzVM --resource-group vpn-rg --location eastus --image Win20
 
 #### - Inside VM 
 <pre lang="Azure-cli">
-az network public-ip create --name insidevm-pip --resource-group onprem-rg --location eastus2 --allocation-method Dynamic
+az network public-ip create --name insidevm-pip --resource-group onprem-rg --location eastus2 --allocation-method Static
 az network nic create --resource-group onprem-rg --name insidevmnic01 --location eastus2 --subnet Inside --private-ip-address 172.16.1.100 --vnet-name On-premises --public-ip-address insidevm-pip
 az vm create --name Inside-VM --resource-group onprem-rg --location eastus2 --image UbuntuLTS --admin-username azure --admin-password Networking2021# --nics insidevmnic01
 </pre>
 
 #### - Onprem-VM
 <pre lang="Azure-cli">
-az network public-ip create --name onpremvm-pip --resource-group onprem-rg --location eastus2 --allocation-method Dynamic
+az network public-ip create --name onpremvm-pip --resource-group onprem-rg --location eastus2 --allocation-method Static
 az network nic create --resource-group onprem-rg --name onpremvmnic01 --location eastus2 --subnet VM --private-ip-address 172.16.2.100 --vnet-name On-premises --public-ip-address onpremvm-pip
 az vm create --name Onprem-VM --resource-group onprem-rg --location eastus2 --image UbuntuLTS --admin-username azure --admin-password Networking2021# --nics onpremvmnic01
 </pre>
 ### 2. Route table to direct the traffic to the ASAv
 <pre lang="Azure-cli">
 az network route-table create --name OnPrem-rt --resource-group onprem-rg
-az network route-table route create --name Onprem-rt --resource-group onprem-rg --route-table-name Azure-rt --address-prefix 192.16.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
+az network route-table route create --name Azure-rt --resource-group onprem-rg --route-table-name OnPrem-rt --address-prefix 192.168.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
 az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 </pre>
@@ -282,7 +294,7 @@ The goal of this part is only to show you how a new route is getting added autom
 az network vnet create --resource-group vpn-rg --location eastus --name Azure-Spoke --address-prefixes 10.10.0.0/16 --subnet-name DevOps --subnet-prefix 10.10.0.0/24 --network-security-group vm-nsg
 az network vnet subnet create --resource-group vpn-rg --name PE --vnet-name Azure-Spoke --address-prefix 10.10.1.0/24
 </pre>
-### 2. The peerings
+### 2. The peering connections
 
 #### -  Get the ID of  both VNETs
 <pre lang="Azure-cli">
@@ -292,7 +304,7 @@ HubId=$(az network vnet show --resource-group vpn-rg --name Azure --query id --o
 #### - Set up the peerings between the Azure and the Azure-Spoke VNETs
 <pre lang="Azure-cli">
 az network vnet peering create --name Spoke-to-Hub --resource-group vpn-rg --vnet-name Azure-Spoke --remote-vnet $HubId --allow-vnet-access --use-remote-gateways --allow-forwarded-traffic
-az network vnet peering create --name Hub-to-Spoke --resource-group vpn-rg --vnet-name Azure --remote-vnet #SpokeId --allow-forwarded-traffic --allow-vnet-access --allow-gateway-transit
+az network vnet peering create --name Hub-to-Spoke --resource-group vpn-rg --vnet-name Azure --remote-vnet $SpokeId --allow-forwarded-traffic --allow-vnet-access --allow-gateway-transit
 </pre>
 #### - Update the route table Azure-rt on the Onpremises environment
 <pre lang="Azure-cli">
@@ -304,7 +316,7 @@ az network vnet subnet update --name Inside --vnet-name On-premises --resource-g
 
 #### - Spoke VM to test the connectivity with the Onpremises network
 <pre lang="Azure-cli">
-az network public-ip create --name spokevm-pip --resource-group vpn-rg --location eastus --allocation-method Dynamic
+az network public-ip create --name spokevm-pip --resource-group vpn-rg --location eastus --allocation-method Static
 az network nic create --resource-group vpn-rg --name spokevmnic01 --location eastus --subnet DevOps --private-ip-address 10.10.0.100 --vnet-name Azure-Spoke --public-ip-address spokevm-pip
 az vm create --name Spoke-VM --resource-group vpn-rg --location eastus --image Win2012R2Datacenter --admin-username azure --admin-password Networking2021# --nics spokevmnic01
 </pre>
