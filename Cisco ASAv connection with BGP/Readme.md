@@ -7,8 +7,10 @@ This lab puts into practice a VPN connection between Azure and a Cisco ASAv usin
  - Routing on Azure
  - The Peering connectivity
  - NAT on Azure VPN Gateway
-The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we are using the CLI and the commands are shown below.
+
 > Note: I would like to mention that this lab is only used for testing and learning purposes.
+
+The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we are using the CLI and the commands are shown below.
 
 ## Topology 
 
@@ -414,14 +416,17 @@ az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --set ena
 
 ### 2. Update the VPN connection to integrate the NAT rule and update the routing table Onpremises
 #### 1. Update the VPN connection
-Since the NAT rules are still Preview, the CLI commands are very limited. We'll be using Ps to update the VPN connection.
+Since the NAT rules are still Preview, the CLI commands are very limited. We'll be using PS to update the VPN connection.
+
 ```azurepowershell
 $EgressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name Azure-Spoke -ParentResourceName Azure-GW
 $IngressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name OnPremises-NAT -ParentResourceName Azure-GW
 $AzConn = Get-AzVirtualNetworkGatewayConnection -Name Az-to-Onprem -ResourceGroupName vpn-rg
 Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $AzConn -IngressNatRule $IngressRule -EgressNatRule $EgressRule
 ```
+
 #### 2. Update the Onprem-rt to integrate the NAT changes
+
 ```azurecli-interactive
 az network route-table route create --name Azure-Spoke-NAT --resource-group onprem-rg --route-table-name Onprem-rt --address-prefix 100.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
 az network route-table route delete --name Azure-Spoke-rt --resource-group onprem-rg --route-table-name Onprem-rt
@@ -429,12 +434,12 @@ az network vnet subnet update --name VM --vnet-name On-premises --resource-group
 az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 az network vnet subnet update --name NAT-Subnet --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 ```
+
 ### 3. Update the Cisco ASA routing
 
 Using the config mode, we will enter the commands below
 <pre lang="...">
 route Inside 10.10.0.0 255.255.0.0 172.16.1.1 1
-
 router bgp 65015
  address-family ipv4 anycast
   network 10.10.0.0 mask 255.255.0.0
