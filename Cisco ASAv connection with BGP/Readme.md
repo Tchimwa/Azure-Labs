@@ -401,12 +401,11 @@ az network vnet subnet create --resource-group onprem-rg --name NAT-Subnet --vne
 
 ### 1. Upgrade our Azure VPN Gateway and create the NAT rules 
 
-Since we have an Azure VPN Gateway with VpnGw1 SKU, we will have to upgrade to the VpnGw2 at least in order to use the NAT rules. NAT is supported on the the following SKUs: VpnGw2~5, VpnGw2AZ~5AZ.
+Since we have an Azure VPN Gateway with VpnGw1 SKU, we will have to upgrade to the VpnGw2 at least in order to use the NAT rules. NAT is supported on the the following SKUs: VpnGw2-to-5, VpnGw2AZ-to-5AZ.
 
 Before updating the connection and update the routing on the Onpremises device, we have to create and save the NAT rules on the Azure VPN gateway.
 
-> [!Important]
-> Do not forget to enable BGP route translation since we're using BGP
+**Important: Do not forget to enable BGP route translation since we're using BGP**
 
 <pre lang="Azure-cli">
 az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --sku VpnGw2
