@@ -8,10 +8,7 @@ This lab puts into practice a VPN connection between Azure and a Cisco ASAv usin
  - The Peering connectivity
  - NAT on Azure VPN Gateway
 The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we are using the CLI and the commands are shown below.
-
-
 > Note: I would like to mention that this lab is only used for testing and learning purposes.
-
 
 ## Topology 
 
