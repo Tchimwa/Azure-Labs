@@ -1,8 +1,17 @@
 # VPN connection between Azure and a Cisco ASAv with BGP
 
-This lab puts into practice a VPN connection between Azure and a Cisco ASAv using BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity.
-I would like to mention that this lab is only used for testing and learning purposes.
+This lab puts into practice a VPN connection between Azure and a Cisco ASAv using BGP routing protocol. Azure here is represented by the virtual network called Azure, Onpremises is a representation of the remote entity. During this lab session, we will be working on the different topics below:
+ - Azure Virtual Network
+ - Azure VPN Gateway
+ - Site-to-Site IPSec connection with BGP
+ - Routing on Azure
+ - The Peering connectivity
+ - NAT on Azure VPN Gateway
 The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we are using the CLI and the commands are shown below.
+
+> [!Important]
+> I would like to mention that this lab is only used for testing and learning purposes.
+
 
 ## Topology 
 
@@ -370,3 +379,82 @@ S        172.16.2.0 255.255.255.0 [1/0] via 172.16.1.1, Inside
 B        192.168.0.0 255.255.0.0 [20/0] via 192.168.0.254, 09:48:49
 S        192.168.0.254 255.255.255.255 [1/0] via 1.1.1.0, Onprem-to-AZ
 </pre>
+
+## Part 8. Configure NAT on Azure VPN Gateway
+
+NAT defines the mechanisms to translate one IP address to another in an IP packet. There are multiple scenarios for NAT:
+ - Connect multiple networks with overlapping IP addresses
+ - Connect from networks with private IP addresses (RFC1918) to the Internet
+ - Connect IPv6 networks to IPv4 networks (NAT64)
+Azure VPN Gateway NAT **ONLY** supports the first scenario to connect on-premises networks or branch offices to an Azure virtual network with overlapping IP addresses. You can read more about the topic here: https://docs.microsoft.com/en-us/azure/vpn-gateway/nat-overview#config 
+
+Organizations commonly use private IP addresses for internal communication in their private networks.When these networks are connected using VPN over the Internet or across private WAN, the address spaces must not overlap otherwise the communication would fail. To connect two or more networks with overlapping IP addresses, NAT is deployed on the gateway devices connecting the networks.
+
+### 0. Adding the 10.10.0.0/16 to the Onpremises VNET
+
+In order to simulate the NAT in our lab, we'll be adding another address space 10.10.0.0/16 which is the same as the Azure-Spoke VNET on the Onpremises VNET, so we can have networks with overlapping address space and create a subnet within the newly created address space
+
+<pre lang="Azure-cli">
+az network vnet update --name On-premises --resource-group onprem-rg --address-prefixes 172.16.0.0/16 10.10.0.0/16
+az network vnet subnet create --resource-group onprem-rg --name NAT-Subnet --vnet-name On-premises --address-prefix 10.10.0.0/24 --network-security-group asa-nsg --route-table Onprem-rt
+</pre>
+
+### 1. Upgrade our Azure VPN Gateway and create the NAT rules 
+
+Since we have an Azure VPN Gateway with VpnGw1 SKU, we will have to upgrade to the VpnGw2 at least in order to use the NAT rules. NAT is supported on the the following SKUs: VpnGw2~5, VpnGw2AZ~5AZ.
+
+Before updating the connection and update the routing on the Onpremises device, we have to create and save the NAT rules on the Azure VPN gateway.
+
+> [!Important]
+> Do not forget to enable BGP route translation since we're using BGP
+
+<pre lang="Azure-cli">
+az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --sku VpnGw2
+
+az network vnet-gateway nat-rule add --resource-group vpn-rg --gateway-name Azure-GW --name Azure-Spoke-NAT --internal-mappings 10.10.0.0/16 --external-mappings 100.10.0.0/16 --type Static --mode EgressSnat --no-wait
+az network vnet-gateway nat-rule add --resource-group vpn-rg --gateway-name Azure-GW --name OnPremises-NAT --internal-mappings 10.10.0.0/16 --external-mappings 200.10.0.0/16 --type Static --mode IngressSnat --no-wait
+az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --set enableBgpRouteTranslationForNat=false --no-wait
+</pre>
+
+### 2. Update the VPN connection to integrate the NAT rule and update the routing table Onpremises
+#### 1. Update the VPN connection
+Since the NAT rules are still Preview, the CLI commands are very limited. We'll be using Ps to update the VPN connection.
+```azurepowershell
+$EgressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name Azure-Spoke -ParentResourceName Azure-GW
+$IngressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name OnPremises-NAT -ParentResourceName Azure-GW
+$AzConn = Get-AzVirtualNetworkGatewayConnection -Name Az-to-Onprem -ResourceGroupName vpn-rg
+Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $AzConn -IngressNatRule $IngressRule -EgressNatRule $EgressRule
+```
+#### 2. Update the Onprem-rt to integrate the NAT changes
+```azurecli-interactive
+az network route-table route create --name Azure-Spoke-NAT --resource-group onprem-rg --route-table-name Onprem-rt --address-prefix 100.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
+az network route-table route delete --name Azure-Spoke-rt --resource-group onprem-rg --route-table-name Onprem-rt
+az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
+az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
+az network vnet subnet update --name NAT-Subnet --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
+```
+### 3. Update the Cisco ASA routing
+
+Using the config mode, we will enter the commands below
+<pre lang="...">
+route Inside 10.10.0.0 255.255.0.0 172.16.1.1 1
+
+router bgp 65015
+ address-family ipv4 anycast
+  network 10.10.0.0 mask 255.255.0.0
+ exit-address-family
+</pre>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
