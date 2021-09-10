@@ -437,7 +437,7 @@ az network vnet subnet update --name NAT-Subnet --vnet-name On-premises --resour
 
 ### 3. Update the Cisco ASA routing
 
-Using the config mode, we will enter the commands below
+Using the config mode, we will enter the commands below to add a route to the new address space 10.10.0.0/16
 <pre lang="...">
 route Inside 10.10.0.0 255.255.0.0 172.16.1.1 1
 router bgp 65015
