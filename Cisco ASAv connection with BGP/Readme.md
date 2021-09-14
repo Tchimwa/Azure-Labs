@@ -149,7 +149,7 @@ Password: Networking2021#
 
 asav01> enable
 </pre>
-You will be asked to set up the enable password since it hasn't been set. Feel free to use **Networking2021#** as password.
+You will be prompted to set up the enable password since it hasn't been set. Feel free to use **Networking2021#** as password.
 Then, access the configuration and paste the config below.
 ### 0.Addressing the interfaces 
 <pre lang="cli">
