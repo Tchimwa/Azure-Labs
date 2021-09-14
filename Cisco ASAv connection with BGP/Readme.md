@@ -10,7 +10,7 @@ This lab puts into practice a VPN connection between Azure and a Cisco ASAv usin
 
 ## Requirements
 
-- Azure Account
+- Azure subscription
 - Putty
 
 > Note: I would like to mention that this lab is only used for testing and learning purposes.
