@@ -120,6 +120,8 @@ az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPee
 
 ### 0. Creating the local network gateway
 
+Please replace ***asav-pip*** with the ip address of **asav-pip**
+
 <pre lang=" Azure-cli">
 az network local-gateway create --gateway-ip-address ***asav-pip*** --name az-lng --resource-group vpn-rg --asn 65015 --bgp-peering-address 1.1.1.1
 </pre>
@@ -193,6 +195,9 @@ crypto ipsec profile Azure-IpSec-Profile
  !
 </pre>   
 ### 3. Configure the tunnel interfaces
+
+Please replace ***Azure-GW Public IP*** with the public address **vpngw-pip**
+
 <pre lang="cli">
 interface Tunnel10
  nameif  Onprem-to-Az
@@ -205,6 +210,9 @@ interface Tunnel10
 !
 </pre>
 ### 4. Configure the tunnel group
+
+Please replace ***Azure-GW Public IP*** with the public address **vpngw-pip**
+
 <pre lang="cli">
 group-policy AzGroup internal
 group-policy AzGroup attributes
