@@ -8,6 +8,11 @@ This lab puts into practice a VPN connection between Azure and a Cisco ASAv usin
  - The Peering connectivity
  - NAT on Azure VPN Gateway
 
+## Requirements
+
+- Azure Account
+- Putty
+
 > Note: I would like to mention that this lab is only used for testing and learning purposes.
 
 The configurations have been done using Azure CLI for the Azure part. When it comes to the Cisco configuration, we are using the CLI and the commands are shown below.
@@ -136,11 +141,16 @@ az network vpn-connection ipsec-policy add --resource-group vpn-rg --connection-
     --ipsec-integrity SHA256 --pfs-group None --sa-lifetime 27000 --sa-max-size 102400000
 </pre>
 ## Part 4. Set up the Cisco ASA
-SSH to ASA management address and paste in the below configuration in config mode.
+
+Use Putty to access the Cisco ASAv VM, once you are IN, please follow the steps below:
 <pre lang="...">
 login: azure
 Password: Networking2021#
+
+asav01> enable
 </pre>
+You will be asked to set up the enable password since it hasn't been set. Feel free to use **Networking2021#** as password.
+Then, access the configuration and paste the config below.
 ### 0.Addressing the interfaces 
 <pre lang="cli">
 interface GigabitEthernet0/0
