@@ -130,7 +130,7 @@ az network local-gateway create --gateway-ip-address ***asav-pip*** --name az-ln
 <pre lang=" Azure-cli">
 az network vpn-connection create --name Az-to-Onprem --resource-group vpn-rg --vnet-gateway1 Azure-GW --location eastus --shared-key Networking2021# --local-gateway2 az-lng --enable-bgp
 </pre>
-#### - Due to some reasons, we may be forced to changes the parameters of our connexion as you can see on the pic below. In this case, DH Group 2 which is send by default by Azure is getting deprecated from the future cisco ASAv versions, so we change the configuration to use the DH Group 14. 
+#### - Due to diverse reasons, we may be forced to change the parameters of the connection as you can see on the pic below. In this case, DH Group 2 which is one of the IKE Phase 1 parameters sent by Azure by default is getting deprecated on the future cisco ASAv versions, so we have to change the configuration to use another DH Group value supported by both parties.
 
 ![DH Group 14 - Custom policy](https://github.com/Tchimwa/Azure-Labs/blob/main/Cisco%20ASAv%20connection%20with%20BGP/DH%20Group%2014%20-%20Custom%20policy.jpg)
 
