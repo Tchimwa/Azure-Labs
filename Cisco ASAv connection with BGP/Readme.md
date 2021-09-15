@@ -456,16 +456,18 @@ az network vnet subnet update --name NAT-Subnet --vnet-name On-premises --resour
 #### 3. Update the Cisco ASA routing to integrate the address space 10.10.0.0/16
 
 Using the config mode, we will enter the commands below to add a route to the new address space 10.10.0.0/16
-<pre lang="...">
+
+```cli
 route Inside 10.10.0.0 255.255.0.0 172.16.1.1 1
-router bgp 65015
- address-family ipv4 anycast
-  network 10.10.0.0 mask 255.255.0.0
- exit-address-family
-</pre>
+```
 
-As verification, we can use the same tools we used earlier to confirm the changes on the results.
+As verification, we can use the same tools we used earlier to confirm the changes on the results and use NAT-VM for testing. 
 
+```azurecli-interactive
+az network public-ip create --name natvm-pip --resource-group onprem-rg --location eastus2 --allocation-method Static
+az network nic create --resource-group onprem-rg --name natvmnic01 --location eastus2 --subnet NAT-Subnet --private-ip-address 10.10.0.100 --vnet-name On-premises --public-ip-address natvm-pip
+az vm create --name NAT-VM --resource-group onprem-rg --location eastus2 --image UbuntuLTS --admin-username azure --admin-password Networking2021# --nics natvmnic01
+```
 
 
 
