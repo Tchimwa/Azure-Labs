@@ -240,7 +240,6 @@ router bgp 65015
   neighbor 192.168.0.254 remote-as 65010
   neighbor 192.168.0.254 ebgp-multihop 255
   neighbor 192.168.0.254 activate
-  network 172.16.2.0 mask 255.255.255.0
   no auto-summary
   no synchronization
   redistribute static
