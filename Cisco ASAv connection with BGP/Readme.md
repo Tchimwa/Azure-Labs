@@ -427,9 +427,9 @@ Before updating the connection and update the routing on the Onpremises device, 
 <pre lang="Azure-cli">
 az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --sku VpnGw2
 
-az network vnet-gateway nat-rule add --resource-group vpn-rg --gateway-name Azure-GW --name Azure-Spoke-NAT --internal-mappings 10.10.0.0/16 --external-mappings 100.10.0.0/16 --type Static --mode EgressSnat --no-wait
-az network vnet-gateway nat-rule add --resource-group vpn-rg --gateway-name Azure-GW --name OnPremises-NAT --internal-mappings 10.10.0.0/16 --external-mappings 200.10.0.0/16 --type Static --mode IngressSnat --no-wait
-az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --set enableBgpRouteTranslationForNat=false --no-wait
+az network vnet-gateway nat-rule add --resource-group vpn-rg --gateway-name Azure-GW --name Azure-Spoke-NAT --internal-mappings 10.10.0.0/16 --external-mappings 100.10.0.0/16 --type Static --mode EgressSnat
+az network vnet-gateway nat-rule add --resource-group vpn-rg --gateway-name Azure-GW --name OnPremises-NAT --internal-mappings 10.10.0.0/16 --external-mappings 200.10.0.0/16 --type Static --mode IngressSnat
+az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --set enableBgpRouteTranslationForNat=false
 </pre>
 
 ### 2. Update the VPN connection to integrate the NAT rule and update the routing table Onpremises
