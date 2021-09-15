@@ -437,7 +437,7 @@ az network vnet-gateway update --resource-group vpn-rg --name Azure-GW --set ena
 Since the NAT rules are still Preview, the CLI commands are very limited. We'll be using PS to update the VPN connection.
 
 ```azurepowershell
-$EgressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name Azure-Spoke -ParentResourceName Azure-GW
+$EgressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name Azure-Spoke-NAT -ParentResourceName Azure-GW
 $IngressRule = Get-AzVirtualNetworkGatewayNatRule -ResourceGroupName vpn-rg -Name OnPremises-NAT -ParentResourceName Azure-GW
 $AzConn = Get-AzVirtualNetworkGatewayConnection -Name Az-to-Onprem -ResourceGroupName vpn-rg
 Set-AzVirtualNetworkGatewayConnection -VirtualNetworkGatewayConnection $AzConn -IngressNatRule $IngressRule -EgressNatRule $EgressRule
