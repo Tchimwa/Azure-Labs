@@ -110,9 +110,9 @@ az vm create --resource-group onprem-rg --location eastus2 --name asav01 --size 
 We will be using those parameters to set up the local network Gateway and also to configure the Cisco ASA onpremises
 
 <pre lang=" Azure-cli">
-az network public-ip show --resource-group onprem-rg --name asav-pip --query "{address: ipAddress}"
+az network public-ip show --resource-group --location eastus2 onprem-rg --name asav-pip --query "{address: ipAddress}"
 
-az network public-ip show --resource-group vpn-rg --name vpngw-pip --query "{address: ipAddress}"
+az network public-ip show --resource-group --location eastus2 vpn-rg --name vpngw-pip --query "{address: ipAddress}"
 az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPeeringAddress] -o table --resource-group vpn-rg
 </pre>
 
@@ -274,7 +274,7 @@ az vm create --name Onprem-VM --resource-group onprem-rg --location eastus2 --im
 </pre>
 ### 2. Route table to direct the traffic to the ASAv
 <pre lang="Azure-cli">
-az network route-table create --name OnPrem-rt --resource-group onprem-rg
+az network route-table create --name OnPrem-rt --resource-group onprem-rg --location eatus2
 az network route-table route create --name Azure-rt --resource-group onprem-rg --route-table-name OnPrem-rt --address-prefix 192.168.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 172.16.1.4
 az network vnet subnet update --name VM --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
 az network vnet subnet update --name Inside --vnet-name On-premises --resource-group onprem-rg --route-table Onprem-rt
