@@ -110,7 +110,7 @@ az vm create --resource-group onprem-rg --location eastus2 --name asav01 --size 
 We will be using those parameters to set up the local network Gateway and also to configure the Cisco ASA onpremises
 
 <pre lang=" Azure-cli">
-az network public-ip show --resource-group --location eastus2 onprem-rg --name asav-pip --query "{address: ipAddress}"
+az network public-ip show --resource-group onprem-rg --location eastus2 --name asav-pip --query "{address: ipAddress}"
 
 az network public-ip show --resource-group --location eastus2 vpn-rg --name vpngw-pip --query "{address: ipAddress}"
 az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPeeringAddress] -o table --resource-group vpn-rg
