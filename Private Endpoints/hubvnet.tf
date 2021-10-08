@@ -253,6 +253,7 @@ resource "azurerm_virtual_machine_extension" "hubdnsrole" {
 }
 
 ########### Local network Gateways for the connection #########
+
 resource "azurerm_local_network_gateway" "lng1" {
     name = var.oplng01
     resource_group_name = azurerm_resource_group.azure.name
@@ -283,3 +284,38 @@ resource "azurerm_local_network_gateway" "lng2" {
     tags = local.azcloud_tags  
 }
 
+############## VPN connections ###############
+
+resource "azurerm_virtual_network_gateway_connection" "onpremconn01" {
+    name = var.hubconn01
+    location = var.azloc
+    resource_group_name = azurerm_resource_group.azure.name
+    enable_bgp = true
+    connection_protocol = "IKEv2"
+    shared_key = "Networking2021#"
+    type = "IPsec"
+
+
+    virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vpngw.id
+    local_network_gateway_id = azurerm_local_network_gateway.lng1.id
+
+    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw, azurerm_virtual_machine.pan_fw_vm, azurerm_local_network_gateway.lng1 ]
+    tags = local.azcloud_tags 
+}
+
+resource "azurerm_virtual_network_gateway_connection" "onpremconn02" {
+    name = var.hubconn02
+    location = var.azloc
+    resource_group_name = azurerm_resource_group.azure.name
+    enable_bgp = true
+    connection_protocol = "IKEv2"
+    shared_key = "Networking2021#"
+    type = "IPsec"
+
+
+    virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vpngw.id
+    local_network_gateway_id = azurerm_local_network_gateway.lng2.id
+
+    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw, azurerm_virtual_machine.pan_fw_vm, azurerm_local_network_gateway.lng2 ]
+    tags = local.azcloud_tags 
+}

@@ -241,3 +241,27 @@ variable "HubfileUris" {
     default = ""
     type = string  
 }
+
+variable "hubconn01" {
+    description = "First VPN connection to Onpremises"
+    default = "Hub-to-Onpremises-01"
+    type = string  
+}
+
+variable "hubconn02" {
+    description = "Second VPN connection to Onpremises"
+    default = "Hub-to-Onpremises-02"
+    type = string  
+}
+
+variable "sqlsrvname" {
+    description = "SQL Server name"
+    default = "netsqlsrv"
+    type = string  
+}
+
+variable "sqldbname" {
+    description = "SQL Server name"
+    default = "netsqldb"
+    type = string  
+}
