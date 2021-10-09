@@ -1,5 +1,4 @@
 ####################### HUB VNET ######################
-
 resource "azurerm_network_security_group" "hub_dns_nsg" {
   name                = var.hubdnsnsg
   location            = var.azloc
@@ -168,7 +167,6 @@ resource "azurerm_bastion_host" "hub_bastion" {
 }
 
 ############# Hub VM NICs ############
-
 resource "azurerm_network_interface" "hub_vm_nic" {
     name = "hubvmnic01"
     resource_group_name = azurerm_resource_group.azure.name
