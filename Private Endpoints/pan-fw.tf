@@ -195,7 +195,7 @@ resource "azurerm_virtual_machine" "pan_fw_vm" {
         version    = "latest"
     }
     storage_os_disk {
-      name = join("",list(var.panVMName, "-osdisk"))
+      name = "panfw-osdisk"
       caching = "ReadWrite"
       create_option = "FromImage"
       vhd_uri = "${azurerm_storage_account.palo_fw_stg.primary_blob_endpoint}vhds/${var.panVMName}-vmseries-byol.vhd"
