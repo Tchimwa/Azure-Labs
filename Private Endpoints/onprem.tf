@@ -217,9 +217,9 @@ resource "azurerm_virtual_machine" "op_dns" {
 
     os_profile_windows_config {
         provision_vm_agent = true
-  }
-
-  tags = local.onprem_tags  
+  }                                                                                                                            
+  
+   tags = local.onprem_tags  
 }
 
 resource "azurerm_virtual_machine_extension" "dnsrole" {

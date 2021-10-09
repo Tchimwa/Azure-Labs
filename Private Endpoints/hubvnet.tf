@@ -17,7 +17,7 @@ resource "azurerm_network_security_group" "hub_dns_nsg" {
   }
 
   tags = local.azcloud_tags
-  depends_on = [azurerm_virtual_network.hub]
+  depends_on = [azurerm_virtual_network.hub]                                                                                                                                                                                                                                                                                                                                                                                                           
 }
 resource "azurerm_virtual_network" "hub" {
 
@@ -316,7 +316,7 @@ resource "azurerm_local_network_gateway" "lng2" {
       bgp_peering_address = "1.1.1.1"      
     }
 
-    depends_on = [ azurerm_public_ip.pan_out_pip, azurerm_virtual_machine.pan_fw_vm ]
+    depends_on = [azurerm_virtual_machine.pan_fw_vm ]
     tags = local.azcloud_tags  
 }
 
@@ -335,7 +335,7 @@ resource "azurerm_virtual_network_gateway_connection" "onpremconn01" {
     virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vpngw.id
     local_network_gateway_id = azurerm_local_network_gateway.lng1.id
 
-    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw, azurerm_virtual_machine.pan_fw_vm, azurerm_local_network_gateway.lng1 ]
+    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw ]
     tags = local.azcloud_tags 
 }
 
@@ -352,6 +352,6 @@ resource "azurerm_virtual_network_gateway_connection" "onpremconn02" {
     virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vpngw.id
     local_network_gateway_id = azurerm_local_network_gateway.lng2.id
 
-    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw, azurerm_virtual_machine.pan_fw_vm, azurerm_local_network_gateway.lng2 ]
+    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw]
     tags = local.azcloud_tags 
 }
