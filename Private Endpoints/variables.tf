@@ -6,7 +6,7 @@ variable "azloc" {
 variable "onpremloc" {
     description  =  "Location of the resources Onpremises"
     type             =  string
-    default = "westus"
+    default = "eastus2"
 }
 variable "username" {
     description  = "Username for all the VMs"
@@ -139,7 +139,7 @@ variable "OutsidePublicIPName" {
 }
 variable "PublicIPType" {
     description = "Public IPs type"
-    default = "Static"
+    default = "Dynamic"
     type = string  
 }
 variable "opbastionpip" {
@@ -160,7 +160,7 @@ variable "pip_sku" {
 }
 variable "bastioniptype" {
     description = "Bastion IP Type"
-    default = "Dynamic"
+    default = "Static"
     type = string  
 }
 

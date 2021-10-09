@@ -184,35 +184,48 @@ resource "azurerm_windows_virtual_machine" "op_vm" {
 
 ########### OP DNS VM ##########
 
-resource "azurerm_windows_virtual_machine" "op_dns" {
+resource "azurerm_virtual_machine" "op_dns" {
     name = var.opdnsvm
     resource_group_name = azurerm_resource_group.onprem.name
     location = var.onpremloc
     network_interface_ids = [azurerm_network_interface.op_dns_nic.id]
-    admin_username = var.username
-    admin_password = var.password
-    size = var.VMSize
-    
-    source_image_reference {
-      publisher = local.publisher
-      offer = local.vmOffer
-      sku = local.vmSKU
-      version = local.versionSKU
+    vm_size = var.VMSize
+
+    storage_image_reference {
+        publisher = local.publisher
+        offer = local.vmOffer
+        sku = local.vmSKU
+        version = local.versionSKU
     }
-    os_disk {
-      storage_account_type = "Standard_LRS"
-      caching = "ReadWrite"      
+
+    storage_os_disk {
+        name = "dns-srv01-osdisk"
+        managed_disk_type  = "Standard_LRS"
+        caching = "ReadWrite"
+        create_option = "FromImage"     
     }
-    tags = local.onprem_tags  
+
+    os_profile {
+        computer_name  = "dns-srv01"
+        admin_username = var.username
+        admin_password = var.password
+  }
+
+    os_profile_windows_config {
+        provision_vm_agent = true
+  }
+
+  tags = local.onprem_tags  
 }
 
 resource "azurerm_virtual_machine_extension" "dnsrole" {
     name = "dns-role"
-    virtual_machine_id = azurerm_windows_virtual_machine.op_dns.id
-    publisher = "Microsoft.Azure.Extensions"
-    type = "CustomScript"
+    virtual_machine_id = azurerm_virtual_machine.op_dns.id
+    publisher = "Microsoft.Compute"
+    type = "CustomScriptExtension"
     type_handler_version = "2.1"
     auto_upgrade_minor_version = true
+
     settings = <<SETTINGS
         {
             "fileUris": [
@@ -226,6 +239,7 @@ resource "azurerm_virtual_machine_extension" "dnsrole" {
         }
     PROTECTED_SETTINGS
 
-    depends_on = [azurerm_windows_virtual_machine.op_dns]
+    depends_on = [azurerm_virtual_machine.op_dns]
     tags = local.onprem_tags  
 }
+

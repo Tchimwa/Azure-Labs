@@ -203,28 +203,39 @@ resource "azurerm_windows_virtual_machine" "hub_vm" {
 
 ########## Hub DNS VM ############
 
-resource "azurerm_windows_virtual_machine" "hub_dns" {
+resource "azurerm_virtual_machine" "hub_dns" {
     name = var.hubdnsvm
     resource_group_name = azurerm_resource_group.azure.name
     location = var.azloc
     network_interface_ids = [azurerm_network_interface.hub_dns_nic.id]
-    admin_username = var.username
-    admin_password = var.password
-    size = var.VMSize
+    vm_size = var.VMSize
 
-    source_image_reference {
-      publisher = local.publisher
-      offer = local.vmOffer
-      sku = local.vmSKU
-      version = local.versionSKU
-    }
-    os_disk {
-      storage_account_type = "Standard_LRS"
-      caching = "ReadWrite"      
+    storage_image_reference {
+        publisher = local.publisher
+        offer = local.vmOffer
+        sku = local.vmSKU
+        version = local.versionSKU
     }
 
-    tags = local.azcloud_tags
-    depends_on = [azurerm_network_interface.hub_dns_nic]
+    storage_os_disk {
+        name = "dns-fw01-osdisk"
+        managed_disk_type  = "Standard_LRS"
+        caching = "ReadWrite"
+        create_option = "FromImage"     
+    }
+
+    os_profile {
+        computer_name  = "dns-fw01"
+        admin_username = var.username
+        admin_password = var.password
+  }
+
+    os_profile_windows_config {
+        provision_vm_agent = true
+  }
+
+  tags = local.onprem_tags 
+  depends_on = [azurerm_network_interface.hub_dns_nic]
 }
 
 resource "azurerm_virtual_machine_extension" "hubdnsrole" {
@@ -247,7 +258,7 @@ resource "azurerm_virtual_machine_extension" "hubdnsrole" {
         }
     PROTECTED_SETTINGS
 
-    depends_on = [azurerm_windows_virtual_machine.hub_dns]
+    depends_on = [azurerm_virtual_machine.hub_dns]
     tags = local.azcloud_tags  
 }
 
