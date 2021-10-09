@@ -1,5 +1,5 @@
-
 ################### Onpremises Vnet #################
+
 resource "azurerm_virtual_network" "on_prem" {
 
     name = var.OPVnetName
@@ -23,7 +23,7 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_nsg" {
     subnet_id = azurerm_subnet.Mgmt.id
     network_security_group_id = azurerm_network_security_group.pan_fw_nsg.id  
 
-    depends_on = [azurerm_subnet.Mgmt, azurerm_network_security_group.pan_fw_nsg]
+    depends_on = [azurerm_virtual_network.on_prem]
 }
 resource "azurerm_subnet" "Outside" {
 
@@ -31,14 +31,13 @@ resource "azurerm_subnet" "Outside" {
     address_prefixes = [var.OPSubnetPrefixes[1]]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name    
-  
+
+    depends_on = [azurerm_virtual_network.on_prem]
 }
 
 resource "azurerm_subnet_network_security_group_association" "outside_nsg" {
     subnet_id = azurerm_subnet.Outside.id
     network_security_group_id = azurerm_network_security_group.pan_fw_nsg.id  
-
-    depends_on = [azurerm_subnet.Outside, azurerm_network_security_group.pan_fw_nsg]
 }
 resource "azurerm_subnet" "inside" {
   
@@ -47,13 +46,14 @@ resource "azurerm_subnet" "inside" {
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
+    depends_on = [azurerm_virtual_network.on_prem]
 }
 
 resource "azurerm_subnet_route_table_association" "inside-route" {
     subnet_id = azurerm_subnet.inside.id
     route_table_id = azurerm_route_table.onprem_route.id
 
-    depends_on = [azurerm_subnet.inside, azurerm_route_table.onprem_route]
+    depends_on = [azurerm_virtual_network.on_prem]
 }
 resource "azurerm_subnet" "opbastionsbnet" {
 
@@ -61,7 +61,8 @@ resource "azurerm_subnet" "opbastionsbnet" {
     address_prefixes = [var.OPSubnetPrefixes[3]]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
-  
+
+    depends_on = [azurerm_virtual_network.on_prem]  
 }
 resource "azurerm_subnet" "vm" {
 
@@ -70,13 +71,12 @@ resource "azurerm_subnet" "vm" {
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
+    depends_on = [azurerm_virtual_network.on_prem]
 }
 
 resource "azurerm_subnet_route_table_association" "vm-route" {
     subnet_id = azurerm_subnet.vm.id
     route_table_id = azurerm_route_table.onprem_route.id
-
-    depends_on = [azurerm_subnet.vm, azurerm_route_table.onprem_route]
 }
 resource "azurerm_subnet" "servers" {
 
@@ -84,21 +84,18 @@ resource "azurerm_subnet" "servers" {
     address_prefixes = [var.OPSubnetPrefixes[5]]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
-  
+
+    depends_on = [azurerm_virtual_network.on_prem]  
 }
 
 resource "azurerm_subnet_network_security_group_association" "servers_nsg" {
     subnet_id = azurerm_subnet.servers.id
-    network_security_group_id = azurerm_network_security_group.op_dns_nsg.id  
-
-    depends_on = [azurerm_subnet.servers, azurerm_network_security_group.op_dns_nsg]
+    network_security_group_id = azurerm_network_security_group.op_dns_nsg.id    
 }
 
 resource "azurerm_subnet_route_table_association" "servers-route" {
     subnet_id = azurerm_subnet.servers.id
     route_table_id = azurerm_route_table.onprem_route.id
-
-    depends_on = [azurerm_subnet.servers, azurerm_route_table.onprem_route]
 }
 
 ################## VM and DNS NIC cards ##################
@@ -246,7 +243,5 @@ resource "azurerm_virtual_machine_extension" "dnsrole" {
         }
     PROTECTED_SETTINGS
 
-    depends_on = [azurerm_virtual_machine.op_dns]
     tags = local.onprem_tags  
 }
-
