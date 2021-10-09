@@ -217,15 +217,3 @@ resource "azurerm_virtual_machine" "pan_fw_vm" {
     
     tags = local.onprem_tags
 }
-
-output "PAN-FW Url" {
-  value = join("", list("https://", azurerm_public_ip.pan_mgmt_pip.fqdn))
-}
-
-output "PAN-FW Management IP" {
-  value = join("", list("https://", azurerm_public_ip.pan_mgmt_pip.ip_address))
-}
-
-output "PAN-FW VPN Interface IP" {
-  value = join("", list("https://", azurerm_public_ip.pan_out_pip.ip_address))
-}

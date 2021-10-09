@@ -46,12 +46,6 @@ variable "opdnsvm" {
     default = "DNS-SRV01"
     type = string  
 }
-variable "opvmname" {
-    description = "Hub VM name"
-    default = "Hub-VM01"
-    type = string  
-}
-
 variable "hubdnsvm" {
     description = "Hub DNS Server name"
     default = "DNS-FWD01"
