@@ -23,7 +23,7 @@ resource "azurerm_public_ip" "pan_mgmt_pip" {
     resource_group_name = azurerm_resource_group.onprem.name
     allocation_method = var.PublicIPType
     sku = var.pip_sku
-    domain_name_label = join(".",list(var.panVMName, var.onpremloc, "cloudapp.azure.com"))  
+    domain_name_label = "palovmlab01.west.cloudapp.azure.com"
 
     tags = local.onprem_tags
 }
