@@ -233,12 +233,12 @@ variable "defaultroute" {
 }
 variable "fileUris" {
     description = "Link to the custom script installing DNS role on the server DNS-SRV01"
-    default = ""
+    default = "https://raw.githubusercontent.com/Tchimwa/Azure-Labs/main/Private%20Endpoints/dnsserver.ps1"
     type = string  
 }
 variable "HubfileUris" {
     description = "Link to the custom script installing DNS role on DNS-FW01"
-    default = ""
+    default = "https://raw.githubusercontent.com/Tchimwa/Azure-Labs/main/Private%20Endpoints/dnsazfwd.ps1"
     type = string  
 }
 
