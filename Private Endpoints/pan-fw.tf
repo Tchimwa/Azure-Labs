@@ -21,7 +21,7 @@ resource "azurerm_public_ip" "pan_mgmt_pip" {
     name = var.mgmtPublicIPName
     location = var.onpremloc
     resource_group_name = azurerm_resource_group.onprem.name
-    allocation_method = var.PublicIPType
+    allocation_method = "Static"
     sku = var.pip_sku
     domain_name_label = var.panVMName
 
@@ -31,7 +31,7 @@ resource "azurerm_public_ip" "pan_out_pip" {
     name = var.OutsidePublicIPName
     location = var.onpremloc
     resource_group_name = azurerm_resource_group.onprem.name
-    allocation_method = var.PublicIPType
+    allocation_method = "Static"
     sku = var.pip_sku
 
     tags = local.onprem_tags
@@ -68,6 +68,28 @@ resource "azurerm_network_security_group" "pan_fw_nsg" {
   }
 
   tags = local.onprem_tags
+  depends_on = [azurerm_virtual_network.on_prem]
+}
+
+resource "azurerm_network_security_group" "op_dns_nsg" {
+  name                = var.opdnsnsg
+  location            = var.onpremloc
+  resource_group_name = azurerm_resource_group.onprem.name
+
+  security_rule {
+    name                       = "Allow RDP"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "TCP"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = local.onprem_tags
+  depends_on = [azurerm_virtual_network.on_prem]
 }
 
 ############### Default Route for the PAN FW ##############

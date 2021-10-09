@@ -87,6 +87,13 @@ resource "azurerm_subnet" "servers" {
   
 }
 
+resource "azurerm_subnet_network_security_group_association" "servers_nsg" {
+    subnet_id = azurerm_subnet.servers.id
+    network_security_group_id = azurerm_network_security_group.op_dns_nsg.id  
+
+    depends_on = [azurerm_subnet.servers, azurerm_network_security_group.op_dns_nsg]
+}
+
 resource "azurerm_subnet_route_table_association" "servers-route" {
     subnet_id = azurerm_subnet.servers.id
     route_table_id = azurerm_route_table.onprem_route.id

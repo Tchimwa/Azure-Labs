@@ -220,6 +220,19 @@ variable "panfwnsg" {
     default = "pan-nsg"
     type = string  
 }
+
+variable "opdnsnsg" {
+    description = " NSG attached to the OP servers"
+    default = "OPServers-nsg"
+    type = string  
+}
+
+variable "hubdnsnsg" {
+     description = " NSG attached to the HUB servers"
+    default = "HubServers-nsg"
+    type = string    
+}
+
 variable "defaultroute" {
     description = "Outside to Internet - 0.0.0.0/0"
     default = "0.0.0.0/0"

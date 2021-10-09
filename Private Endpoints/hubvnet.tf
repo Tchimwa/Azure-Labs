@@ -1,4 +1,25 @@
 ####################### HUB VNET ######################
+
+resource "azurerm_network_security_group" "hub_dns_nsg" {
+  name                = var.hubdnsnsg
+  location            = var.azloc
+  resource_group_name = azurerm_resource_group.azure.name
+
+  security_rule {
+    name                       = "Allow RDP"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "TCP"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+
+  tags = local.azcloud_tags
+  depends_on = [azurerm_virtual_network.azure]
+}
 resource "azurerm_virtual_network" "hub" {
 
     name = var.AZVnetName
@@ -43,6 +64,13 @@ resource "azurerm_subnet" "hub_servers" {
     resource_group_name = azurerm_resource_group.azure.name
     virtual_network_name = azurerm_virtual_network.hub.name
   
+}
+
+resource "azurerm_subnet_network_security_group_association" "hub_servers_assoc" {
+    subnet_id = azurerm_subnet.hub_servers.id
+    network_security_group_id = azurerm_network_security_group.hub_dns_nsg.id  
+
+    depends_on = [azurerm_subnet.hub_servers, azurerm_network_security_group.hub_dns_nsg]
 }
 
 resource "azurerm_virtual_network_peering" "hub-spoke-peering" {
