@@ -17,7 +17,7 @@ resource "azurerm_network_security_group" "hub_dns_nsg" {
   }
 
   tags = local.azcloud_tags
-  depends_on = [azurerm_virtual_network.azure]
+  depends_on = [azurerm_virtual_network.hub]
 }
 resource "azurerm_virtual_network" "hub" {
 
