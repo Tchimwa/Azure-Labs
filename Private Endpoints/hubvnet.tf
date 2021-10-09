@@ -57,7 +57,7 @@ resource "azurerm_virtual_network_peering" "hub-spoke-peering" {
     allow_virtual_network_access = true
     use_remote_gateways = false
 
-    depends_on = [azurerm_virtual_network.hub, azurerm_virtual_network.spoke, azurerm_virtual_network_gateway.hub-vpngw]  
+    depends_on = [azurerm_virtual_network.hub, azurerm_virtual_network.spoke, azurerm_virtual_network_gateway.hub_vpngw]  
 }
 
 ########## Hub public IPs ############
@@ -220,8 +220,7 @@ resource "azurerm_windows_virtual_machine" "hub_dns" {
     }
     os_disk {
       storage_account_type = "Standard_LRS"
-      caching = "ReadWrite"
-      create_option = "FromImage"
+      caching = "ReadWrite"      
     }
 
     tags = local.azcloud_tags
