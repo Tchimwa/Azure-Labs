@@ -240,7 +240,7 @@ resource "azurerm_virtual_machine" "hub_dns" {
 
 resource "azurerm_virtual_machine_extension" "hubdnsrole" {
     name = "hub-dns-role"    
-    virtual_machine_id = azurerm_windows_virtual_machine.hub_dns.id
+    virtual_machine_id = azurerm_virtual_machine.hub_dns.id
     publisher = "Microsoft.Azure.Extensions"
     type = "CustomScript"
     type_handler_version = "2.1"
