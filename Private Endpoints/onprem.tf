@@ -12,8 +12,8 @@ resource "azurerm_virtual_network" "on_prem" {
 }
 resource "azurerm_subnet" "Mgmt" {
 
-    name = var.OPSubnetName[0]
-    address_prefixes = [var.OPSubnetPrefixes[0]]
+    name = var.pan-sb-mgmt
+    address_prefixes = [join("", list(var.OPSubnetPrefixes, "0.0/24"))]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -27,8 +27,8 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_nsg" {
 }
 resource "azurerm_subnet" "Outside" {
 
-    name = var.OPSubnetName[1]
-    address_prefixes = [var.OPSubnetPrefixes[1]]
+    name = var.pan-sb-untrust
+    address_prefixes = [join("", list(var.OPSubnetPrefixes, "1.0/24"))]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name    
 
@@ -41,8 +41,8 @@ resource "azurerm_subnet_network_security_group_association" "outside_nsg" {
 }
 resource "azurerm_subnet" "inside" {
   
-    name = var.OPSubnetName[2]
-    address_prefixes = [var.OPSubnetPrefixes[2]]
+    name = var.pan-sb-trust
+    address_prefixes = [join("", list(var.OPSubnetPrefixes, "2.0/24"))]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -57,8 +57,8 @@ resource "azurerm_subnet_route_table_association" "inside-route" {
 }
 resource "azurerm_subnet" "opbastionsbnet" {
 
-    name = var.OPSubnetName[3]
-    address_prefixes = [var.OPSubnetPrefixes[3]]
+    name = var.pan-sb-bastion
+    address_prefixes = [join("", list(var.OPSubnetPrefixes, "3.0/24"))]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -66,8 +66,8 @@ resource "azurerm_subnet" "opbastionsbnet" {
 }
 resource "azurerm_subnet" "vm" {
 
-    name = var.OPSubnetName[4]
-    address_prefixes = [var.OPSubnetPrefixes[4]]
+    name = var.pan-sb-vm
+    address_prefixes = [join("", list(var.OPSubnetPrefixes, "4.0/24"))]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -80,8 +80,8 @@ resource "azurerm_subnet_route_table_association" "vm-route" {
 }
 resource "azurerm_subnet" "servers" {
 
-    name = var.OPSubnetName[5]
-    address_prefixes = [var.OPSubnetPrefixes[5]]
+    name = var.pan-sb-servers
+    address_prefixes = [join("", list(var.OPSubnetPrefixes, "5.0/24"))]
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 

@@ -30,7 +30,7 @@ locals {
 
 #Creation of the Cloud resource group
 resource "azurerm_resource_group" "azure" {
-    name         =   "AzCloud-rg"
+    name         =   "Cloud-rg"
     location     =   var.azloc 
 
     tags = local.azcloud_tags
@@ -38,7 +38,7 @@ resource "azurerm_resource_group" "azure" {
 
 # Creation of the onpremises resource group
 resource "azurerm_resource_group" "onprem" {
-     name         =   "On-premises-rg"
+     name         =   "Onpremises-rg"
     location     =   var.onpremloc 
 
     tags = local.onprem_tags

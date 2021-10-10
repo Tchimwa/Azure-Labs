@@ -1,12 +1,12 @@
 variable "azloc" {
     description  =  "Location of the resources on Azure"
     type             =  string
-    default = "uksouth"
+    default = "eastus2"
 }
 variable "onpremloc" {
     description  =  "Location of the resources Onpremises"
     type             =  string
-    default = "westeurope"
+    default = "eastus"
 }
 variable "username" {
     description  = "Username for all the VMs"
@@ -96,14 +96,44 @@ variable "OPVnetPrefix" {
 
 variable "OPSubnetPrefixes" {
     description  =  "Address Space for the Onpremises subnets"
-    type             =  list (string)
-    default         =  ["10.20.0.0/24", "10.20.1.0/24", "10.20.2.0/24", "10.20.3.0/24", "10.20.4.0/24", "10.20.5.0/24"]
+    type             =  string
+    default         =  "10.20."
 }
 
-variable "OPSubnetName" {
-    description  =  "Name of different subnets within the Onpremises VNET"
-    type             =  list (string)
-    default         =  [ "Mgmt", "Untrust", "Trust", "AzureBastionSubnet", "VM", "Servers"] 
+variable "pan-sb-mgmt" {
+    description = "Pan-fw Mgmt subnet"
+    default = "Mgmt"
+    type = string  
+}
+
+variable "pan-sb-untrust" {
+    description = "Pan-fw Untrust subnet"
+    default = "Untrust"
+    type = string  
+}
+
+variable "pan-sb-trust" {
+    description = "Pan-fw Trust subnet"
+    default = "Trust"
+    type = string  
+}
+
+variable "pan-sb-bastion" {
+    description = "OP Bastion subnet"
+    default = "AzureBastionSubnet"
+    type = string  
+}
+
+variable "pan-sb-vm" {
+    description = "OP vm subnet"
+    default = "VM"
+    type = string  
+}
+
+variable "pan-sb-servers" {
+    description = "OP servers subnet"
+    default = "Servers"
+    type = string  
 }
 variable "SpokeVnetPrefix" {
     description  =  "Address Space of the Spoke VNET"
