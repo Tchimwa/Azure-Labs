@@ -1,12 +1,3 @@
-terraform {
-  required_providers {
-    azurerm = {
-      source = "hashicorp/azurerm"
-      version = "~>2.0"
-    }
-  }
-}
-
 provider "azurerm" {
     features { }
   }
@@ -47,7 +38,7 @@ resource "azurerm_resource_group" "azure" {
 
 # Creation of the onpremises resource group
 resource "azurerm_resource_group" "onprem" {
-     name         =   "Onpremises-rg"
+     name         =   "On-premises-rg"
     location     =   var.onpremloc 
 
     tags = local.onprem_tags
