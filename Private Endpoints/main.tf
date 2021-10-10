@@ -37,6 +37,7 @@ resource "azurerm_resource_group" "azure" {
 }
 
 # Creation of the onpremises resource group
+
 resource "azurerm_resource_group" "onprem" {
      name         =   "Onpremises-rg"
     location     =   var.onpremloc 
