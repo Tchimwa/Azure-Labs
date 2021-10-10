@@ -6,8 +6,6 @@ resource "azurerm_virtual_network" "on_prem" {
     location = var.onpremloc
     resource_group_name = azurerm_resource_group.onprem.name
     address_space = [var.OPVnetPrefix]
-   // dns_servers = [ "10.20.5.100"]
-
     tags = local.onprem_tags
 }
 resource "azurerm_subnet" "Mgmt" {
