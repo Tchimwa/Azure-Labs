@@ -267,9 +267,9 @@ resource "azurerm_virtual_machine" "hub_dns" {
 resource "azurerm_virtual_machine_extension" "hubdnsrole" {
     name = "hub-dns-role"    
     virtual_machine_id = azurerm_virtual_machine.hub_dns.id
-    publisher = "Microsoft.Azure.Extensions"
-    type = "CustomScript"
-    type_handler_version = "2.1"
+    publisher = "Microsoft.Compute"
+    type = "CustomScriptExtension"
+    type_handler_version = "1.10"
     auto_upgrade_minor_version = true
     settings = <<SETTINGS
         {
