@@ -1,12 +1,12 @@
 variable "azloc" {
     description  =  "Location of the resources on Azure"
     type             =  string
-    default = "southcentralus"
+    default = "uksouth"
 }
 variable "onpremloc" {
     description  =  "Location of the resources Onpremises"
     type             =  string
-    default = "eastus"
+    default = "westeurope"
 }
 variable "username" {
     description  = "Username for all the VMs"
