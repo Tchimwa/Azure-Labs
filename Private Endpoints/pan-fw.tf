@@ -113,13 +113,7 @@ resource "azurerm_route_table" "onprem_route" {
     name = var.oprtname
     location = var.onpremloc
     resource_group_name = azurerm_resource_group.onprem.name
-
-    route {
-        name = "default-route"
-        address_prefix = var.defaultroute
-        next_hop_type = "VirtualAppliance"
-        next_hop_in_ip_address = "10.20.2.4"
-    }
+ 
     route {
         name = "Hub-route"
         address_prefix = var.AZVnetPrefix
