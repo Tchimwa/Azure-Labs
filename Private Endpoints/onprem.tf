@@ -228,11 +228,11 @@ resource "azurerm_virtual_machine_extension" "dnsrole" {
     type_handler_version = "1.9"
     auto_upgrade_minor_version = true
 
-    settings = <<SETTINGS
+    protected_settings = <<PROTECTED_SETTINGS
         {
             "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted Install-WindowsFeature -Name DNS -IncludeAllSubFeature -IncludeManagementTools; Add-DnsServerForwarder -IPAddress 8.8.8.8 -PassThru; exit 0"
         }
-    SETTINGS
+    PROTECTED_SETTINGS
 
     tags = local.onprem_tags  
 }
