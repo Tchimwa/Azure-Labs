@@ -17,7 +17,7 @@ resource "azurerm_virtual_network" "on_prem" {
 resource "azurerm_subnet" "Mgmt" {
 
     name = var.pan-sb-mgmt
-    address_prefixes = "${var.OPSubnetPrefixes}0.0/24"
+    address_prefixes = "10.20.0.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -32,7 +32,7 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_nsg" {
 resource "azurerm_subnet" "Outside" {
 
     name = var.pan-sb-untrust
-    address_prefixes = join("",[var.OPSubnetPrefixes, "1.0/24"])
+    address_prefixes = "10.20.1.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name    
 
@@ -46,7 +46,7 @@ resource "azurerm_subnet_network_security_group_association" "outside_nsg" {
 resource "azurerm_subnet" "inside" {
   
     name = var.pan-sb-trust
-    address_prefixes = "${var.OPSubnetPrefixes}2.0/24"
+    address_prefixes = "10.20.2.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -62,7 +62,7 @@ resource "azurerm_subnet_route_table_association" "inside-route" {
 resource "azurerm_subnet" "opbastionsbnet" {
 
     name = var.pan-sb-bastion
-    address_prefixes = "${var.OPSubnetPrefixes}3.0/24"
+    address_prefixes = "10.20.3.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -71,7 +71,7 @@ resource "azurerm_subnet" "opbastionsbnet" {
 resource "azurerm_subnet" "vm" {
 
     name = var.pan-sb-vm
-    address_prefixes = "${var.OPSubnetPrefixes}4.0/24"
+    address_prefixes = "10.20.4.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -85,7 +85,7 @@ resource "azurerm_subnet_route_table_association" "vm-route" {
 resource "azurerm_subnet" "servers" {
 
     name = var.pan-sb-servers
-    address_prefixes = "${var.OPSubnetPrefixes}5.0/24"
+    address_prefixes = "10.20.5.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
