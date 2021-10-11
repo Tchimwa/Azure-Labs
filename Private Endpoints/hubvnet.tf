@@ -69,7 +69,6 @@ resource "azurerm_subnet_network_security_group_association" "hub_servers_assoc"
     subnet_id = azurerm_subnet.hub_servers.id
     network_security_group_id = azurerm_network_security_group.hub_dns_nsg.id  
 
-    depends_on = [azurerm_subnet.hub_servers, azurerm_network_security_group.hub_dns_nsg]
 }
 
 resource "azurerm_virtual_network_peering" "hub-spoke-peering" {
@@ -84,7 +83,6 @@ resource "azurerm_virtual_network_peering" "hub-spoke-peering" {
     allow_virtual_network_access = true
     use_remote_gateways = false
 
-    depends_on = [azurerm_virtual_network.hub, azurerm_virtual_network.spoke, azurerm_virtual_network_gateway.hub_vpngw]  
 }
 
 ########## Hub public IPs ############
@@ -145,8 +143,7 @@ resource "azurerm_virtual_network_gateway" "hub_vpngw" {
       public_ip_address_id = azurerm_public_ip.vpn_pip_02.id
     }
 
-    depends_on = [azurerm_public_ip.vpn_pip_01, azurerm_public_ip.vpn_pip_02, azurerm_subnet.vpngw]
-    tags = local.azcloud_tags
+   tags = local.azcloud_tags
 }
 
 ############## Hub Bastion Host ##################
@@ -162,8 +159,7 @@ resource "azurerm_bastion_host" "hub_bastion" {
       subnet_id = azurerm_subnet.bastion.id
     }
 
-    depends_on = [azurerm_virtual_network.hub, azurerm_public_ip.hub_bastion_pip ]
-    tags =   local.azcloud_tags
+   tags =   local.azcloud_tags
 }
 
 ############# Hub VM NICs ############
@@ -180,7 +176,6 @@ resource "azurerm_network_interface" "hub_vm_nic" {
       private_ip_address = "10.10.2.10"
     }
 
-    depends_on = [azurerm_virtual_network.hub]
     tags = local.azcloud_tags 
 }
 
@@ -197,7 +192,6 @@ resource "azurerm_network_interface" "hub_dns_nic" {
       private_ip_address = "10.10.3.100"
     }
 
-    depends_on = [azurerm_virtual_network.hub]
     tags = local.azcloud_tags  
 }
 
@@ -224,7 +218,6 @@ resource "azurerm_windows_virtual_machine" "hub_vm" {
     }
 
     tags = local.azcloud_tags
-    depends_on = [azurerm_network_interface.hub_vm_nic]
 }
 
 ########## Hub DNS VM ############
@@ -284,7 +277,6 @@ resource "azurerm_virtual_machine_extension" "hubdnsrole" {
         }
     PROTECTED_SETTINGS
 
-    depends_on = [azurerm_virtual_machine.hub_dns]
     tags = local.azcloud_tags  
 }
 
@@ -301,7 +293,6 @@ resource "azurerm_local_network_gateway" "lng1" {
       bgp_peering_address = "1.1.1.1"      
     }
 
-    depends_on = [ azurerm_public_ip.pan_out_pip, azurerm_virtual_machine.pan_fw_vm ]
     tags = local.azcloud_tags  
 }
 
@@ -316,7 +307,6 @@ resource "azurerm_local_network_gateway" "lng2" {
       bgp_peering_address = "1.1.1.1"      
     }
 
-    depends_on = [azurerm_virtual_machine.pan_fw_vm ]
     tags = local.azcloud_tags  
 }
 
@@ -335,7 +325,6 @@ resource "azurerm_virtual_network_gateway_connection" "onpremconn01" {
     virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vpngw.id
     local_network_gateway_id = azurerm_local_network_gateway.lng1.id
 
-    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw ]
     tags = local.azcloud_tags 
 }
 
@@ -352,6 +341,5 @@ resource "azurerm_virtual_network_gateway_connection" "onpremconn02" {
     virtual_network_gateway_id = azurerm_virtual_network_gateway.hub_vpngw.id
     local_network_gateway_id = azurerm_local_network_gateway.lng2.id
 
-    depends_on = [ azurerm_virtual_network_gateway.hub_vpngw]
-    tags = local.azcloud_tags 
+   tags = local.azcloud_tags 
 }
