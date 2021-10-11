@@ -230,16 +230,9 @@ resource "azurerm_virtual_machine_extension" "dnsrole" {
 
     settings = <<SETTINGS
         {
-            "fileUris": [
-                "${var.fileUris}"
-                ]
+            "commandToExecute": "powershell.exe -ExecutionPolicy Unrestricted Install-WindowsFeature -Name DNS -IncludeAllSubFeature -IncludeManagementTools; Add-DnsServerForwarder -IPAddress 8.8.8.8 -PassThru; exit 0"
         }
     SETTINGS
-    protected_settings = <<PROTECTED_SETTINGS
-        {
-            "commandToExecute": "powershell -ExecutionPolicy Unrestricted -file dnsserver.ps1"
-        }
-    PROTECTED_SETTINGS
 
     tags = local.onprem_tags  
 }
