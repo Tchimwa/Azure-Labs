@@ -32,7 +32,7 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_nsg" {
 resource "azurerm_subnet" "Outside" {
 
     name = var.pan-sb-untrust
-    address_prefixes = "${var.OPSubnetPrefixes}1.0/24"
+    address_prefixes = join("",[var.OPSubnetPrefixes, "1.0/24"])
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name    
 
