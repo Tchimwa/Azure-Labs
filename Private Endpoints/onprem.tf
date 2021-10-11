@@ -17,7 +17,7 @@ resource "azurerm_virtual_network" "on_prem" {
 resource "azurerm_subnet" "Mgmt" {
 
     name = var.pan-sb-mgmt
-    address_prefixes = [join("", list(var.OPSubnetPrefixes, "0.0/24"))]
+    address_prefixes = "${var.OPSubnetPrefixes}0.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -32,7 +32,7 @@ resource "azurerm_subnet_network_security_group_association" "mgmt_nsg" {
 resource "azurerm_subnet" "Outside" {
 
     name = var.pan-sb-untrust
-    address_prefixes = [join("", list(var.OPSubnetPrefixes, "1.0/24"))]
+    address_prefixes = "${var.OPSubnetPrefixes}1.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name    
 
@@ -46,7 +46,7 @@ resource "azurerm_subnet_network_security_group_association" "outside_nsg" {
 resource "azurerm_subnet" "inside" {
   
     name = var.pan-sb-trust
-    address_prefixes = [join("", list(var.OPSubnetPrefixes, "2.0/24"))]
+    address_prefixes = "${var.OPSubnetPrefixes}2.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -62,7 +62,7 @@ resource "azurerm_subnet_route_table_association" "inside-route" {
 resource "azurerm_subnet" "opbastionsbnet" {
 
     name = var.pan-sb-bastion
-    address_prefixes = [join("", list(var.OPSubnetPrefixes, "3.0/24"))]
+    address_prefixes = "${var.OPSubnetPrefixes}3.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -71,7 +71,7 @@ resource "azurerm_subnet" "opbastionsbnet" {
 resource "azurerm_subnet" "vm" {
 
     name = var.pan-sb-vm
-    address_prefixes = [join("", list(var.OPSubnetPrefixes, "4.0/24"))]
+    address_prefixes = "${var.OPSubnetPrefixes}4.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -85,7 +85,7 @@ resource "azurerm_subnet_route_table_association" "vm-route" {
 resource "azurerm_subnet" "servers" {
 
     name = var.pan-sb-servers
-    address_prefixes = [join("", list(var.OPSubnetPrefixes, "5.0/24"))]
+    address_prefixes = "${var.OPSubnetPrefixes}5.0/24"
     resource_group_name = azurerm_resource_group.onprem.name
     virtual_network_name = azurerm_virtual_network.on_prem.name
 
@@ -388,25 +388,33 @@ resource "azurerm_bastion_host" "op_bastion" {
 
 ######### OP VM #############
 
-resource "azurerm_windows_virtual_machine" "op_vm" {
+resource "azurerm_virtual_machine" "op_vm" {
     name = var.opvmname
     resource_group_name = azurerm_resource_group.onprem.name
     location = var.onpremloc
     network_interface_ids = [azurerm_network_interface.op_vm_nic.id]
-    admin_username = var.username
-    admin_password = var.password
-    size = var.VMSize
+    vm_size = var.VMSize
 
-    source_image_reference {
-      publisher = local.publisher
-      offer = local.vmOffer
-      sku = local.vmSKU
-      version = local.versionSKU
+    storage_image_reference {
+        publisher = local.publisher
+        offer = local.vmOffer
+        sku = local.vmSKU
+        version = local.versionSKU
     }
-    os_disk {
-      storage_account_type = "Standard_LRS"
-      caching = "ReadWrite"
+    storage_os_disk {
+        name = "dns-fwd01-osdisk"
+        managed_disk_type = "Standard_LRS"
+        caching = "ReadWrite"
+        create_option = "FromImage" 
     }
+    os_profile {
+        computer_name  = "dns-fwd01"
+        admin_username = var.username
+        admin_password = var.password
+  }
+  os_profile_windows_config {
+        provision_vm_agent = true
+  }                                          
 
     tags = local.onprem_tags
 }
