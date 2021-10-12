@@ -1,0 +1,4 @@
+$azrg               = "Cloud-rg"
+$azlocation     = "eastus"
+$oprg              = "Onpremises-rg"
+$oplocation    = "eastus2"
