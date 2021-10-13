@@ -41,7 +41,7 @@ param AzHubVnetSettings object = {
     }
     {
       name: 'AzureBastionSubnet'
-      addressPrefix: '10.0.1.0/24'
+      addressPrefix: '10.10.1.0/24'
     }
     {
       name: 'hub-vm'
@@ -90,7 +90,6 @@ resource hub_srv_nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
     ]
   }
 }
-  
 resource hub_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: AzVnetName
   location: resourceGroup().location
@@ -132,7 +131,6 @@ resource hub_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
   tags:aztag
 }
-
 resource spoke 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   name: AzSpokeVnetName
   location:resourceGroup().location
@@ -159,7 +157,6 @@ resource spoke 'Microsoft.Network/virtualNetworks@2021-02-01' = {
   }
   tags: aztag  
 }
-
 resource hub_spoke_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: 'Hub-to-Spoke'
   parent: hub_vnet
@@ -172,8 +169,12 @@ resource hub_spoke_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeer
       id:spoke.id
     }
   }
+  dependsOn: [
+    vpngw
+    hub_vnet
+    spoke
+  ]
 }
-
 resource spoke_hub_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeerings@2021-02-01' = {
   name: 'Spoke-to-Hub'
   parent: spoke
@@ -186,8 +187,12 @@ resource spoke_hub_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeer
       id:hub_vnet.id
     }
   }
+  dependsOn: [
+    vpngw
+    hub_vnet
+    spoke
+  ]
 }
-
 resource sqlserver 'Microsoft.Sql/servers@2021-02-01-preview' = {
   name: sqlsrvname
   location:resourceGroup().location
@@ -197,9 +202,9 @@ resource sqlserver 'Microsoft.Sql/servers@2021-02-01-preview' = {
     version: '12.0'
   }
 }
-
 resource sqldb 'Microsoft.Sql/servers/databases@2021-02-01-preview' = {
   name: sqldbname
+  parent: sqlserver
   location:resourceGroup().location
   sku: {
     name: 'Basic'
@@ -208,8 +213,10 @@ resource sqldb 'Microsoft.Sql/servers/databases@2021-02-01-preview' = {
   properties:{
     collation: 'SQL_Latin1_General_CP1_CI_AS'    
   }
+  dependsOn: [
+    sqlserver
+  ]
 }
-
 resource hub_bastion_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: hubbastionpip
   location:resourceGroup().location
@@ -221,7 +228,6 @@ resource hub_bastion_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
   tags:aztag
 }
-
 resource vpngw01_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: vpngwpip1
   location:resourceGroup().location
@@ -234,7 +240,6 @@ resource vpngw01_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
   tags: aztag
 }
-
 resource vpngw02_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: vpngwpip2
   location:resourceGroup().location
@@ -247,7 +252,6 @@ resource vpngw02_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   }
   tags: aztag
 }
-
 resource hub_bastion 'Microsoft.Network/bastionHosts@2021-02-01' = {
   name: hubbastionname
   location: resourceGroup().location
@@ -260,7 +264,7 @@ resource hub_bastion 'Microsoft.Network/bastionHosts@2021-02-01' = {
             id:hub_bastion_pip.id
           }
           subnet: {
-            id:AzHubVnetSettings.subnets[1].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', hub_vnet.name, AzHubVnetSettings.subnets[1].name)
           }
         }
 
@@ -272,7 +276,6 @@ resource hub_bastion 'Microsoft.Network/bastionHosts@2021-02-01' = {
   ]
   tags:aztag
 }
-
 resource hub_vm_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: 'hubvmnic01'
   location:resourceGroup().location
@@ -284,7 +287,7 @@ resource hub_vm_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.10.2.10'
           subnet: {
-            id: AzHubVnetSettings.subnets[2].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', hub_vnet.name, AzHubVnetSettings.subnets[2].name)
           }
         }
       }
@@ -292,7 +295,6 @@ resource hub_vm_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   }
   tags:aztag
 }
-
 resource hub_dns_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: 'hubdnsnic01'
   location:resourceGroup().location
@@ -304,7 +306,7 @@ resource hub_dns_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.10.3.100'
           subnet: {
-            id: AzHubVnetSettings.subnets[3].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', hub_vnet.name, AzHubVnetSettings.subnets[3].name)
           }
         }
       }
@@ -312,7 +314,6 @@ resource hub_dns_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   }
   tags:aztag  
 }
-
 resource hub_vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   name: hubvmname
   location: resourceGroup().location
@@ -362,7 +363,6 @@ resource hub_vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   }
   tags: aztag
 }
-
 resource hub_dns 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   name: hubdnsvm
   location: resourceGroup().location
@@ -412,7 +412,6 @@ resource hub_dns 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   }
   tags: aztag
 }
-
 resource hub_dns_extension 'Microsoft.Compute/virtualMachines/extensions@2021-04-01' = {
   name: 'hub-dns-role'
   parent: hub_dns
@@ -433,7 +432,6 @@ resource hub_dns_extension 'Microsoft.Compute/virtualMachines/extensions@2021-04
   }
   tags:aztag
 }
-
 resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-02-01' = {
   name: vpngwname
   location: resourceGroup().location
@@ -456,7 +454,7 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-02-01' = {
             id: vpngw01_pip.id
           }
           subnet: {
-            id: AzHubVnetSettings.subnets[0].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', hub_vnet.name, AzHubVnetSettings.subnets[0].name)
           }
         }
       }
@@ -468,7 +466,7 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-02-01' = {
             id:vpngw02_pip.id
           }
           subnet: {
-            id:AzHubVnetSettings.subnets[0].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', hub_vnet.name, AzHubVnetSettings.subnets[0].name)
           }
         }
       }
@@ -480,6 +478,8 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-02-01' = {
   }
   tags:aztag  
 }
-
-output vpngwip1 string = vpngw01_pip.properties.ipAddress
-output vpngwip2 string = vpngw02_pip.properties.ipAddress
+output hub_vpngw array = [
+  vpngw.properties.bgpSettings.asn
+  vpngw.properties.bgpSettings.bgpPeeringAddresses[0].tunnelIpAddresses[0]
+  vpngw.properties.bgpSettings.bgpPeeringAddresses[1].tunnelIpAddresses[0]
+]

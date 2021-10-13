@@ -1,4 +1,21 @@
 $azrg               = "Cloud-rg"
 $azlocation     = "eastus"
-$oprg              = "Onpremises-rg"
+$oprg              = "Op-rg"
 $oplocation    = "eastus2"
+
+# Create the resource groups
+az group create --name $azrg --location $azlocation 
+az group create --name $oprg --location $oplocation
+
+#Create the deployment groups
+az deployment group create --resource-group $azrg --template-file pelab-main.bicep
+az deployment group create --resource-group $oprg --template-file pe-onprem.bicep
+
+#Creating the local network GWs for the Active-Active connections between Azure and the PAN FW:
+
+az network local-gateway create --name oplng1 --resource-group Cloud-rg --gateway-ip-address ***PAN FW OUT PIP*** --asn 65015 --bgp-peering-address 1.1.1.1
+az network local-gateway create --name oplng2 --resource-group Cloud-rg --gateway-ip-address ***PAN FW OUT PIP*** --asn 65015 --bgp-peering-address 1.1.1.1
+
+#Connections
+
+

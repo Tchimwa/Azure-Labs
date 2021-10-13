@@ -83,7 +83,7 @@ resource pan_fw_nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
         }
       }
       {
-        name: 'Allow-traffic-from-Outside'
+        name: 'Allow-traffic-from-OPVnet'
         properties: {
           priority: 120
           access: 'Allow'
@@ -234,12 +234,16 @@ resource op_bastion_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
 resource mgmt_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: mgmtPublicIPName
   location:resourceGroup().location
+
   sku: {
     name: 'Standard'
     tier: 'Regional'
   }
   properties:{
     publicIPAllocationMethod: 'Static'
+    dnsSettings: {
+       domainNameLabel: panVMName
+    }
   }
   tags: optag
 }
@@ -266,10 +270,10 @@ resource op_bastion 'Microsoft.Network/bastionHosts@2021-02-01' = {
         name:'opbastipconf'
         properties:{
           publicIPAddress: {
-            id:op_bastion_pip.id
+            id: op_bastion_pip.id
           }
           subnet: {
-            id:OPVnetSettings.subnets[3].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[3].name)
           }
         }
 
@@ -278,6 +282,7 @@ resource op_bastion 'Microsoft.Network/bastionHosts@2021-02-01' = {
   }
   dependsOn:[
     op_vnet
+    op_bastion_pip
   ]
   tags: optag
 }
@@ -291,9 +296,11 @@ resource pan_mgmt_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
         name:'panmgmtipconf'
         properties:{
           privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: mgmt_pip
+          publicIPAddress: {
+            id: mgmt_pip.id
+          }
           subnet: {
-            id: OPVnetSettings.subnets[0].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[0].name)
           }
         }
       }
@@ -311,15 +318,20 @@ resource pan_out_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
         name:'panoutipconf'
         properties:{
           privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: out_pip
+          publicIPAddress:  {
+             id: out_pip.id
+          }
           subnet: {
-            id: OPVnetSettings.subnets[1].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[1].name)
           }
         }
       }
     ]
   }
   tags: optag
+  dependsOn: [
+    op_vnet
+  ]
 }
 
 resource pan_in_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
@@ -333,13 +345,16 @@ resource pan_in_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.20.2.4'
           subnet: {
-            id: OPVnetSettings.subnets[2].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[2].name)
           }
         }
       }
     ]
   }
   tags: optag
+  dependsOn: [
+    op_vnet
+  ]
 }
 
 resource op_vm_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
@@ -353,13 +368,16 @@ resource op_vm_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.20.4.10'
           subnet: {
-            id: OPVnetSettings.subnets[4].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[4].name)
           }
         }
       }
     ]
   }
   tags: optag
+  dependsOn: [
+    op_vnet
+  ]
 }
 
 resource op_dns_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
@@ -368,12 +386,12 @@ resource op_dns_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   properties: {
     ipConfigurations:[
       {
-        name:'hubdnsipconf'
+        name:'opdnsipconf'
         properties:{
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.20.5.100'
           subnet: {
-            id: OPVnetSettings.subnets[5].id
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[5].name)
           }
         }
       }
@@ -579,5 +597,5 @@ resource pan_fw 'Microsoft.Compute/virtualMachines@2021-04-01' = {
   ]
 }
 
-output pan_mgmt_ip string = mgmt_pip.properties.ipAddress
-output pan_out_ip string = out_pip.properties.ipAddress
+output panfw_fqdn string = mgmt_pip.properties.dnsSettings.fqdn
+output panfw_mgmt string = mgmt_pip.properties.ipAddress
