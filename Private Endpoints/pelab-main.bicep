@@ -21,13 +21,9 @@ param bastioniptype string = 'Static'
 param bastionipsku string = 'Standard'
 param hubbastionname string = 'CL-Bastion'
 param vpngwname string = 'cl-vpn-gw'
-//param oplng1 string = 'oplng01'
-//param oplng2 string = 'oplng02'
 param vpngwpip1 string = 'clvpngw01-pip'
 param vpngwpip2 string = 'clvpngw02-pip'
 param hubsrvnsg string = 'hubsrv-nsg'
-//param hubconn01 string = 'hub-to-onprem-01'
-//param hubconn02 string = 'hub-to-onprem-02'
 param sqlsrvname string = 'netsqlsrv'
 param sqldbname string = 'netsqldb'
 param AzVnetName string = 'Azcloud-hub'
@@ -478,6 +474,7 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-02-01' = {
   }
   tags:aztag  
 }
+
 output hub_vpngw array = [
   vpngw.properties.bgpSettings.asn
   vpngw.properties.bgpSettings.bgpPeeringAddresses[0].tunnelIpAddresses[0]

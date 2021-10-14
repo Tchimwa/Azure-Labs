@@ -12,41 +12,35 @@ var optag = {
 
 param username string = 'Azure'
 param password string = 'Networking2021#'
-param adminUsername string = 'paloalto'
-param adminPassword string  = 'Pal0Alt0@123'
 param VMSize string = 'Standard_D2s_v3'
 param opvmname string = 'op-vm01'
 param opdnsvm string = 'dns-srv01'
-param panVMSize string = 'Standard_DS3_v2'
-param panVMName string = 'palovmnetlab01'
-param mgmtPublicIPName string = 'mgmt-pip'
+param csrVMSize string = 'Standard_DS3_v2'
+param csrVMName string = 'csr01v-netlab'
 param outPublicIPname string = 'outside-pip'
 param opbastionpip string = 'op-bastion-pip'
 param bastionipsku string = 'Standard'
 param bastioniptype string = 'Static'
 param opbastionname string = 'OP-Bastion'
 param oprtname string = 'op-rt'
-param panstoaccnt string = 'panfwstoaccnt'
-param panfwnsg string = 'pan-nsg'
+param csr01vnsg string = 'csr-nsg'
 param opsrvnsg string = 'opsrv-nsg'
-param dftroute string = '0.0.0.0/0'
 param OPVnetName string = 'On-premises'
 param AzVnetPrefix string = '10.10.0.0/16'
 param SpokeVnetPrefix string = '172.16.0.0/16'
-//param fileUri string = 'https://raw.githubusercontent.com/Tchimwa/Azure-Labs/main/Private%20Endpoints/dnsserver.ps1'
 param OPVnetSettings object = {
   addressPrefix: '10.20.0.0/16'
   subnets: [
     {
-      name: 'Mgmt'
+      name: 'Outside'
       addressPrefix: '10.20.0.0/24'
     }
     {
-      name: 'Untrust'
+      name: 'DMZ'
       addressPrefix: '10.20.1.0/24'
     }
     {
-      name: 'Trust'
+      name: 'Inside'
       addressPrefix: '10.20.2.0/24'
     }
     {
@@ -64,8 +58,8 @@ param OPVnetSettings object = {
   ]
 }
 
-resource pan_fw_nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
-  name: panfwnsg
+resource csr01v_nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
+  name: csr01vnsg
   location: resourceGroup().location
   properties: {
     securityRules: [
@@ -75,26 +69,13 @@ resource pan_fw_nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
           priority: 110
           access: 'Allow'
           direction: 'Inbound'
-          protocol: '*'
+          protocol: 'Tcp'
           sourcePortRange: '*'
-          sourceAddressPrefix: dftroute
+          sourceAddressPrefix: '*'
           destinationAddressPrefix: '*'
-          destinationPortRange: '*'
+          destinationPortRange: '22'
         }
-      }
-      {
-        name: 'Allow-traffic-from-OPVnet'
-        properties: {
-          priority: 120
-          access: 'Allow'
-          direction: 'Inbound'
-          protocol: '*'
-          sourcePortRange: '*'
-          sourceAddressPrefix: OPVnetSettings.addressPrefix
-          destinationAddressPrefix: '*'
-          destinationPortRange: '*'
-        }
-      }
+      }      
     ]
   }
   tags: optag
@@ -165,7 +146,7 @@ resource op_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         properties:{
           addressPrefix: OPVnetSettings.subnets[0].addressPrefix
           networkSecurityGroup: {
-            id:pan_fw_nsg.id
+            id:csr01v_nsg.id
           }
         }
       }
@@ -174,7 +155,7 @@ resource op_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         properties:{
           addressPrefix: OPVnetSettings.subnets[1].addressPrefix
           networkSecurityGroup: {
-            id: pan_fw_nsg.id
+            id: csr01v_nsg.id
           }
         }
       }
@@ -231,23 +212,6 @@ resource op_bastion_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   tags: optag
 }
 
-resource mgmt_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
-  name: mgmtPublicIPName
-  location:resourceGroup().location
-
-  sku: {
-    name: 'Standard'
-    tier: 'Regional'
-  }
-  properties:{
-    publicIPAllocationMethod: 'Static'
-    dnsSettings: {
-       domainNameLabel: panVMName
-    }
-  }
-  tags: optag
-}
-
 resource out_pip 'Microsoft.Network/publicIPAddresses@2021-02-01' = {
   name: outPublicIPname
   location:resourceGroup().location
@@ -287,42 +251,20 @@ resource op_bastion 'Microsoft.Network/bastionHosts@2021-02-01' = {
   tags: optag
 }
 
-resource pan_mgmt_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
-  name: 'panmgmtnic01'
+resource csr_out_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: 'csroutnic01'
   location:resourceGroup().location
   properties: {
     ipConfigurations:[
       {
-        name:'panmgmtipconf'
-        properties:{
-          privateIPAllocationMethod: 'Dynamic'
-          publicIPAddress: {
-            id: mgmt_pip.id
-          }
-          subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[0].name)
-          }
-        }
-      }
-    ]
-  }
-  tags: optag
-}
-
-resource pan_out_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
-  name: 'panoutnic01'
-  location:resourceGroup().location
-  properties: {
-    ipConfigurations:[
-      {
-        name:'panoutipconf'
+        name:'csroutipconf'
         properties:{
           privateIPAllocationMethod: 'Dynamic'
           publicIPAddress:  {
              id: out_pip.id
           }
           subnet: {
-            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[1].name)
+            id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[0].name)
           }
         }
       }
@@ -334,13 +276,13 @@ resource pan_out_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   ]
 }
 
-resource pan_in_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
-  name: 'paninnic01'
+resource csr_in_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
+  name: 'csrinnic01'
   location:resourceGroup().location
   properties: {
     ipConfigurations:[
       {
-        name:'paninipconf'
+        name:'csrinipconf'
         properties:{
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.20.2.4'
@@ -423,7 +365,7 @@ resource op_vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
         caching:'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'StandardSSD_LRS'
+          storageAccountType: 'Standard_LRS'
         }
       }
       dataDisks: [
@@ -448,6 +390,9 @@ resource op_vm 'Microsoft.Compute/virtualMachines@2021-04-01' = {
     }          
   }
   tags: optag
+  dependsOn: [
+    op_dns
+  ]
 }
 
 resource op_dns 'Microsoft.Compute/virtualMachines@2021-04-01' = {
@@ -473,7 +418,7 @@ resource op_dns 'Microsoft.Compute/virtualMachines@2021-04-01' = {
         caching:'ReadWrite'
         createOption: 'FromImage'
         managedDisk: {
-          storageAccountType: 'StandardSSD_LRS'
+          storageAccountType: 'Standard_LRS'
         }
       }
       dataDisks: [
@@ -516,55 +461,37 @@ resource op_dns_extension 'Microsoft.Compute/virtualMachines/extensions@2021-04-
   tags: optag
 }
 
-resource pan_fw_stg 'Microsoft.Storage/storageAccounts@2021-04-01' = {
-  name: panstoaccnt
-  location:resourceGroup().location
-  kind: 'StorageV2'
-  sku:{
-    name: 'Standard_LRS'    
-  }
-  properties: {
-    accessTier: 'Hot'
-  }  
-}
-
-resource pan_fw 'Microsoft.Compute/virtualMachines@2021-04-01' = {
-  name: panVMName
+resource csr01v 'Microsoft.Compute/virtualMachines@2021-04-01' = {
+  name: csrVMName
   location: resourceGroup().location
   plan: {
-    name: 'byol'
-    publisher: 'paloaltonetworks'
-    product: 'vmseries1'
+    name: '17_3_3-byol'
+    publisher: 'cisco'
+    product: 'cisco-csr-1000v'
   }
   properties: {    
     hardwareProfile: {
-      vmSize: panVMSize      
+      vmSize: csrVMSize      
     }
     osProfile: {
-      adminPassword: adminPassword
-      adminUsername: adminUsername
-      computerName: panVMName
+      adminPassword: password
+      adminUsername: username
+      computerName: csrVMName
       linuxConfiguration: {
         provisionVMAgent: true
         disablePasswordAuthentication: false       
       }      
     }
     networkProfile: {      
-      networkInterfaces: [
+      networkInterfaces: [       
         {
-          id: pan_mgmt_nic.id
+          id: csr_out_nic.id
           properties: {
             primary: true
           }
         }
         {
-          id: pan_out_nic.id
-          properties: {
-            primary: false
-          }
-        }
-        {
-          id: pan_in_nic.id
+          id: csr_in_nic.id
           properties: {
             primary: false
           }
@@ -573,29 +500,30 @@ resource pan_fw 'Microsoft.Compute/virtualMachines@2021-04-01' = {
     }
     storageProfile: {
       imageReference: {
-        publisher: 'paloaltonetworks'
-        offer: 'vmseries1'
-        sku: 'byol'
-        version: 'latest'        
+        publisher: 'cisco'
+        offer: 'cisco-csr-1000v'
+        sku: '17_3_3-byol'
+        version: '17.3.320210317'        
       }
       osDisk: {
         osType: 'Linux'
-        diskSizeGB:60
+        diskSizeGB:8
         createOption: 'FromImage'
         caching: 'ReadWrite'
-        name: 'panfw-osdisk'
-        vhd: {
-          uri:'${pan_fw_stg.properties.primaryEndpoints.blob}vhds/${panVMName}-vmseries-byol.vhd'
+        name: 'csr01v-osdisk'
+        managedDisk: {
+          storageAccountType: 'Standard_LRS'
         }
-      }      
-    }
+      }
+    }      
   }
+  
   tags: optag
   dependsOn: [
-    pan_fw_stg
+    csr_out_nic
+    csr_in_nic
     op_vnet
   ]
 }
 
-output panfw_fqdn string = mgmt_pip.properties.dnsSettings.fqdn
-output panfw_mgmt string = mgmt_pip.properties.ipAddress
+output csr01v_Out string = out_pip.properties.ipAddress
