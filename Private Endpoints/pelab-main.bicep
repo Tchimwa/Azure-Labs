@@ -64,7 +64,7 @@ param AzSpokeVnetSettings object = {
     }
   ]
 }
-param hubfileUris string = 'https://raw.githubusercontent.com/Tchimwa/Azure-Labs/main/Private%20Endpoints/dnsazfwd.ps1'
+param hubfileUris string = 'https://raw.githubusercontent.com/Tchimwa/Azure-Labs/main/Private%20Endpoints/scripts/dnsazfwd.ps1'
 
 
 resource hub_srv_nsg 'Microsoft.Network/networkSecurityGroups@2021-02-01' = {
@@ -194,7 +194,7 @@ resource spoke_hub_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeer
 resource sqlserver 'Microsoft.Sql/servers@2021-02-01-preview' = {
   name: sqlsrvname
   location:resourceGroup().location
-    
+
   properties:{
     administratorLogin: sqladmin
     administratorLoginPassword: password

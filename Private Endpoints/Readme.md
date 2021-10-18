@@ -4,7 +4,7 @@
 
 With all the security breaches that keep happening around the world, we have customers looking for secure way to access their PaaS resources on Azure. Luckily we have Azure Private Link that enables you to access Azure PaaS Services (for example, Azure Storage and SQL Database) and Azure hosted customer-owned/partner services over a private endpoint in your virtual network.Private Link, when combined with either Site to Site VPN or Express Route enable the full encryption and protection of traffic flowing to and from your on-premises. A private endpoint is simply a NIC that connects you privately and securely to your PaaS resource powered by Azure Private Link.
 
-![Azure_private_link](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Azure%20Private%20link.png)
+![Azure_private_link](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Azure%20Private%20link.png)
 
 Due to the different DNS scenarios that can be sometimes confusing for most of our customers, we chose to build this lab to illustrate and clarify the DNS traffic flow of each scenario and also see the requirements needed for every one of them. We will have a Hub-and-Spoke infrastructure in Azure and another VNET simulating the on-premises environment. Both environments will be connected using an Active-active BGP VPN connection with a Cisco CSR1000v being the customer VPN appliance on-premises.  From this lab, the topics listed below will  be covered and explained:
 
@@ -25,7 +25,7 @@ Due to the different DNS scenarios that can be sometimes confusing for most of o
 
 Below, we have the representation of the lab we will work on:
 
-![PE_Infrastructure_lab](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/pe-architecture.pdf)
+![PE_Infrastructure_lab](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/pe-infrastructure.png)
 
 ## Requirements
 
@@ -183,6 +183,8 @@ From the left panel Menu on the netsqlsrv portal, under **Security**, select **P
     - Notice also that during the creation you can already create a private DNS zone, that will work for Azure resources that uses the Azure DNS.
     - Check the PE status and sure that is "***Approved**", also check the private DNS zone and make there is a record for the sql private endpoint.
 
+![pe-security](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/PE_Security.png)
+
 ## Task 3:  Virtual network workloads without custom DNS server (Using Azure DNS)
 
 This configuration is appropriate for virtual network workloads without a custom DNS server. In this scenario, the client queries for the private endpoint IP address to the Azure-provided DNS service 168.63.129.16. Azure DNS will be responsible for DNS resolution of the private DNS zones.
@@ -203,7 +205,7 @@ The following scenario is for an on-premises network with virtual networks in Az
 
 **Resolution**: For workloads accessing a private endpoint from virtual and on-premises networks, use a DNS forwarder to resolve the Azure service public DNS zone deployed in Azure. This DNS forwarder is responsible for resolving all the DNS queries via a server-level forwarder to the Azure-provided DNS service 168.63.129.16.
 
-![DNS_forwarder]()
+![DNS_forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/DNS_forwarder.png)
 
 ## Task 5: Virtual network and on-premises workloads using a DNS server located on-premises
 
@@ -217,7 +219,7 @@ The following scenario is for an on-premises network with virtual networks in Az
 **Resolution**: The on-premises DNS solution must be configured to forward DNS traffic to Azure DNS via a conditional forwarder. The conditional forwarder references the DNS forwarder deployed in Azure.
 Here, the customer will need to deploy a server-level DNS forwarder on Azure to resolve the issue and handle the conditional forwarding coming from on-premises.
 
-![Conditional_DNS-Forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Conditional_DNS_Forwarder.png)
+![Conditional_DNS-Forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Conditional_DNS_Forwarder.png)
 
 ## Special scenario with the P2S connection
 
