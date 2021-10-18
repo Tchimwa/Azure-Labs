@@ -31,7 +31,7 @@ Below, we have the representation of the lab we will work on:
 
 1. Use the ***pe-deploy.azcli*** file to deploy the BICEP templates. Feel free to change the location or the name of the resource group as it pleases you.
 
-2. Use the following [link](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15#download-ssms) below to download and install SSMS on the hub-vm01 and op-vm01 virtual machines. <>
+2. Use the following [link](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15#download-ssms) below to download and install SSMS on the **hub-vm01** and **op-vm01** virtual machines.
     You might be prompted to install NETFramework 2.0 on the server before installing SMSS, please use this [link](https://www.interserver.net/tips/kb/enable-net-framework-3-5-windows-server/#:~:text=Enable%20.NET%20Framework%203.5%20on%20Windows%20Server%201,the%20%E2%80%98Close%E2%80%99%20button%20to%20finalize%20the%20installation%20process) to complete the operation, then install SMSS.
 
 3. From the portal, make sure to toggle to "Yes" on  "Allow Azure services and resources to access this server"
@@ -63,7 +63,7 @@ login: azure
 Password: Networking2021#
 ```
 
-Then, access the configuration mode with the command "***config t***" and paste the config below.
+Then, access the configuration mode with the command "***config t***" and paste the config below. Make sure you replace **vpngwpip1** and **vpngwpip2** by their values.
 
 ```typescript
 ip route 10.20.4.0 255.255.255.0 10.20.2.1
@@ -176,12 +176,13 @@ Aliases:  netsqlsrv.database.windows.net
 ```
 
 From the left panel Menu on the netsqlsrv portal, under **Security**, select **Private endpoint connections** to configure the Private Endpoint.
-    - The PE will be set up on the **AzCloud-Spoke/PE** subnet
-    -  Select the resource type "**Microsoft.Sql/servers**"
-    - Subresource: **Sql Server (sqlServer)**
-    -  Zone name: **privatelink.database.windows.net**
-    - Notice also that during the creation you can already create a private DNS zone, that will work for Azure resources that uses the Azure DNS.
-    - Check the PE status and sure that is "***Approved**", also check the private DNS zone and make there is a record for the sql private endpoint.
+
+- The PE will be set up on the **AzCloud-Spoke/PE** subnet
+- Select the resource type "**Microsoft.Sql/servers**"
+- Subresource: **Sql Server (sqlServer)**
+- Zone name: **privatelink.database.windows.net**
+- Notice also that during the creation you can already create a private DNS zone, that will work for Azure resources that uses the Azure DNS.
+- Check the PE status and sure that is "***Approved**", also check the private DNS zone and make there is a record for the sql private endpoint.
 
 ![pe-security](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/PE_Security.png)
 
@@ -190,7 +191,7 @@ From the left panel Menu on the netsqlsrv portal, under **Security**, select **P
 This configuration is appropriate for virtual network workloads without a custom DNS server. In this scenario, the client queries for the private endpoint IP address to the Azure-provided DNS service 168.63.129.16. Azure DNS will be responsible for DNS resolution of the private DNS zones.
 
 - Run the ***nslookup netsqlsrv.database.windows.net*** command from both ***hub-vm01*** and ***op-vm01***, what is the result?
-- Why do we still have the public IP address even with the Private Endpoint created?
+- Why we still have the public IP address even with the Private Endpoint created?
 - How to resolve the issue ?
 
 **Resolution**:  Since we are having a Hub-and-spoke topology, we should link the private DNS zone ***privatelink.database.windows.net*** to all the VNET that contain clients that need DNS resolution from the zone
@@ -200,7 +201,7 @@ This configuration is appropriate for virtual network workloads without a custom
 The following scenario is for an on-premises network with virtual networks in Azure. Both networks access the private endpoint located in a Azcloud-Spoke network, and have a DNS server hosted on Azure.
 
 - Run the ***nslookup netsqlsrv.database.windows.net*** command from both ***hub-vm01*** and ***op-vm01***, what is the result?
-- Why do we still have the public IP address even with the Private Endpoint created?
+- Why we still have the public IP address even with the Private Endpoint created?
 - How to resolve the issue ?
 
 **Resolution**: For workloads accessing a private endpoint from virtual and on-premises networks, use a DNS forwarder to resolve the Azure service public DNS zone deployed in Azure. This DNS forwarder is responsible for resolving all the DNS queries via a server-level forwarder to the Azure-provided DNS service 168.63.129.16.
@@ -212,7 +213,7 @@ The following scenario is for an on-premises network with virtual networks in Az
 The following scenario is for an on-premises network with virtual networks in Azure. Both networks access the private endpoint located in a Azcloud-Spoke network, and only have a DNS server hosted on-premises.
 
 - Run the ***nslookup netsqlsrv.database.windows.net*** command from both ***hub-vm01*** and ***op-vm01***, what is the result?
-- Why do we still have the public IP address even with the Private Endpoint created?
+- Why we still have the public IP address even with the Private Endpoint created?
 - What are the missing requirements to have the result expected?
 - How to resolve the issue ?
 
@@ -230,5 +231,5 @@ Whenever you use NSlookup it will, by default, automatically send queries direct
 It is an ongoing issue and it hasn't been resolved yet. However when it comes to the DNS configuration on the P2S, you can either set up the DNS servers form your VNET configuration as you see below or add the DNS entry to [Azure VPN client XML] file once downloaded from the portal.  For more information regarding adding the entry, please use the link below:
 <https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-client#how-do-i-add-custom-dns-servers-to-the-vpn-client>
 
-For the Labs, I have provided the Root and Client certificates that will be used for the P2S configuration.
-
+For the Lab, I have provided the Root and Client certificates that will be used for the P2S configuration.
+(Still gathering pictures and data)
