@@ -5,14 +5,16 @@ param versionSKU string = 'latest'
 
 
 var aztag = {
-  Deployment_type:   'Terraform'
+  Deployment_type:   'Bicep'
   Project:                    'LABTIME'
   Environment:             'Azure'    
 }
 
-
+@secure()
+param rootcert string
 param username string = 'Azure'
 param password string = 'Networking2021#'
+param sqladmin string = 'sqladmin'
 param VMSize string = 'Standard_D2s_v3'
 param hubvmname string = 'hub-vm01'
 param hubdnsvm string = 'dns-fwd01'
@@ -192,10 +194,12 @@ resource spoke_hub_peering 'Microsoft.Network/virtualNetworks/virtualNetworkPeer
 resource sqlserver 'Microsoft.Sql/servers@2021-02-01-preview' = {
   name: sqlsrvname
   location:resourceGroup().location
+    
   properties:{
-    administratorLogin: 'sqladmin'
+    administratorLogin: sqladmin
     administratorLoginPassword: password
     version: '12.0'
+    publicNetworkAccess: 'Enabled'    
   }
 }
 resource sqldb 'Microsoft.Sql/servers/databases@2021-02-01-preview' = {
@@ -468,15 +472,34 @@ resource vpngw 'Microsoft.Network/virtualNetworkGateways@2021-02-01' = {
       }
     ]
     bgpSettings: {
-      asn:65010
+      asn:65010      
     }
     vpnGatewayGeneration: 'Generation1'
+    vpnClientConfiguration: {
+      vpnClientAddressPool: {
+        addressPrefixes: [
+          '100.10.0.0/24'        
+        ]
+      }
+      vpnClientProtocols: [
+        'IkeV2'
+      ]
+      vpnClientRootCertificates: [
+         {
+           name: 'RootCertificate'
+           properties: {
+             publicCertData: rootcert
+           }
+         }
+      ]
+    }
   }
   tags:aztag  
 }
 
 output hub_vpngw array = [
   vpngw.properties.bgpSettings.asn
+  vpngw.properties.bgpSettings.bgpPeeringAddress
   vpngw.properties.bgpSettings.bgpPeeringAddresses[0].tunnelIpAddresses[0]
   vpngw.properties.bgpSettings.bgpPeeringAddresses[1].tunnelIpAddresses[0]
 ]

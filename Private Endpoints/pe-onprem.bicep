@@ -5,7 +5,7 @@ param versionSKU string = 'latest'
 
 
 var optag = {
-  Deployment_type:   'Terraform'
+  Deployment_type:   'Bicep'
   Project:                    'LABTIME'
   Environment:           'On-premises'    
 }
@@ -145,9 +145,6 @@ resource op_vnet 'Microsoft.Network/virtualNetworks@2021-02-01' = {
         name: OPVnetSettings.subnets[0].name
         properties:{
           addressPrefix: OPVnetSettings.subnets[0].addressPrefix
-          networkSecurityGroup: {
-            id:csr01v_nsg.id
-          }
         }
       }
       {
@@ -255,11 +252,14 @@ resource csr_out_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: 'csroutnic01'
   location:resourceGroup().location
   properties: {
+    enableAcceleratedNetworking: false
+    enableIPForwarding: true
     ipConfigurations:[
       {
         name:'csroutipconf'
         properties:{
           privateIPAllocationMethod: 'Dynamic'
+          primary: true          
           publicIPAddress:  {
              id: out_pip.id
           }
@@ -280,12 +280,15 @@ resource csr_in_nic 'Microsoft.Network/networkInterfaces@2021-02-01' = {
   name: 'csrinnic01'
   location:resourceGroup().location
   properties: {
+    enableAcceleratedNetworking: false
+    enableIPForwarding: true
     ipConfigurations:[
       {
         name:'csrinipconf'
         properties:{
           privateIPAllocationMethod: 'Static'
           privateIPAddress: '10.20.2.4'
+          primary: false
           subnet: {
             id: resourceId('Microsoft.Network/virtualNetworks/subnets', op_vnet.name, OPVnetSettings.subnets[2].name)
           }
