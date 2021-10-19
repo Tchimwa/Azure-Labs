@@ -19,7 +19,7 @@ Due to the different DNS scenarios that can be sometimes confusing for most of o
   - Special scenario with the P2S connection
 
 > [Important]
-> This lab has been built and it is being use for training and learning purposes not PRODUCTION.
+> This lab has been built and it is being used for training and learning purposes not PRODUCTION.
 
 ## Topology
 
@@ -198,6 +198,7 @@ This configuration is appropriate for virtual network workloads without a custom
 
 ## Task 4: Virtual network and on-premises workloads using a DNS server on Azure
 
+So we'll change the DNS servers configuration on our VNETs to be **10.10.3.100** which is the IP address of **dns-fwd01**
 The following scenario is for an on-premises network with virtual networks in Azure. Both networks access the private endpoint located in a Azcloud-Spoke network, and have a DNS server hosted on Azure.
 
 - Run the ***nslookup netsqlsrv.database.windows.net*** command from both ***hub-vm01*** and ***op-vm01***, what is the result?
@@ -208,19 +209,47 @@ The following scenario is for an on-premises network with virtual networks in Az
 
 ![DNS_forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/DNS_forwarder.png)
 
+Here, we'll be using our VM named **dns-fwd01** as DNS server-level forwarder.
+
+![vnet_dns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/vnet_dns.png)
+
+Changing the DNS servers on both Hub and Onpremises VNETs, and setting up the forwarder **168.63.129.16** on the DNS server **dns-fwd01** help resolve the issue for the customers on-premises and the VM located on Azure.
+On the picture below we can see the results from the **op-vm01**
+
+![op_dns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/op_dns.png)
+
 ## Task 5: Virtual network and on-premises workloads using a DNS server located on-premises
 
+We'll change the DNS server on both VNETs to use the custom DNS server on-premises **dns-srv01 - 10.20.5.100**.
 The following scenario is for an on-premises network with virtual networks in Azure. Both networks access the private endpoint located in a Azcloud-Spoke network, and only have a DNS server hosted on-premises.
+
+AzCloud-Hub DNS servers configuration:
+
+![vnet_dnsconf](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/vnet_dnsconf.png)
+
+On-premises DNS servers configuration:
+
+![vnet_dnsconf](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/vnet_dnsconf.png)
 
 - Run the ***nslookup netsqlsrv.database.windows.net*** command from both ***hub-vm01*** and ***op-vm01***, what is the result?
 - Why we still have the public IP address even with the Private Endpoint created?
 - What are the missing requirements to have the result expected?
 - How to resolve the issue ?
 
+Issue from both VM  ***hub-vm01*** and ***op-vm01***:
+
+![hub_pub](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/hub_pub.png)
+
 **Resolution**: The on-premises DNS solution must be configured to forward DNS traffic to Azure DNS via a conditional forwarder. The conditional forwarder references the DNS forwarder deployed in Azure.
 Here, the customer will need to deploy a server-level DNS forwarder on Azure to resolve the issue and handle the conditional forwarding coming from on-premises.
 
 ![Conditional_DNS-Forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Conditional_DNS_Forwarder.png)
+
+Our custom DNS  server onpremises will be **dns-srv01 - 10.20.5.100**, and together we'll set up the conditional forwarder as it shows on the picture above. We can see that the conditional forwarder is set up to froward the request related to the database private endpoint domain **database.windows.net** to the DNS server we have on Azure **dns-fwd01 - 10.10.3.100**.
+I would like to mention that here the conditional forwarder is set up with the domain **database.windows.net** because the PaaS service used here is a database. Based on the PaaS service linked to the private endpoint, the domain changes. You can refer to the link below to find the right domain according to the PaaS service used.
+<https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration>
+
+![hub_conddns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/hub_pub.png)
 
 ## Special scenario with the P2S connection
 
@@ -232,4 +261,5 @@ It is an ongoing issue and it hasn't been resolved yet. However when it comes to
 <https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-client#how-do-i-add-custom-dns-servers-to-the-vpn-client>
 
 For the Lab, I have provided the Root and Client certificates that will be used for the P2S configuration.
-(Still gathering pictures and data)
+Root cert:
+Client cert:
