@@ -249,17 +249,53 @@ Our custom DNS  server onpremises will be **dns-srv01 - 10.20.5.100**, and toget
 I would like to mention that here the conditional forwarder is set up with the domain **database.windows.net** because the PaaS service used here is a database. Based on the PaaS service linked to the private endpoint, the domain changes. You can refer to the link below to find the right domain according to the PaaS service used.
 <https://docs.microsoft.com/en-us/azure/private-link/private-endpoint-dns#azure-services-dns-zone-configuration>
 
+New AzCloud-Hub DNS servers configuration:
+
+![vnet_dns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/vnet_dns.png)
+
+NSLookup result from Azure where we can notice the DNS server 10.10.3.100 being used:
+
+![op_conddns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/op_conddns.png)
+
+NSlookup results from on-premises where we can notice the DNS server 10.20.5.100 being used:
+
 ![hub_conddns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/hub_pub.png)
 
 ## Special scenario with the P2S connection
 
-Accessing the private endpoint via P2S requires yo to have a DNS forwarder to be able to resolve the endpoint. We all know that the common tool used to check the DNS validation is ***nslookup***. Unfortunately, when it come to DNS resolution with the P2S and the Azure client, NS LOOKUP seems not to be the right tool for the job.
+Accessing the private endpoint via P2S requires you to have a DNS forwarder to be able to resolve the endpoint. We all know that the common tool used to check the DNS validation is ***nslookup***. Unfortunately, when it come to DNS resolution with the P2S and the Azure client, NS LOOKUP hasn't always been the right tool for the job.
 In fact, Windows 10 like Windows server 2012/R2 has a feature called the Name Resolution Policy Table - [NRPT](https://docs.microsoft.com/en-us/previous-versions/windows/it-pro/windows-server-2012-R2-and-2012/dn593632(v=ws.11)#introduction-to-the-nrpt) and the VPN connections will add DNS information inside of NRPT.
 
-Whenever you use NSlookup it will, by default, automatically send queries directly to the DNS servers configured on the network adapter, regardless of the NRPT. Because ***nslookup*** is not aware of NRPT and you must use PowerShell cmdlet Resolve-DNSName to validate the DNS resolution while you are on P2S.
-It is an ongoing issue and it hasn't been resolved yet. However when it comes to the DNS configuration on the P2S, you can either set up the DNS servers form your VNET configuration as you see below or add the DNS entry to [Azure VPN client XML] file once downloaded from the portal.  For more information regarding adding the entry, please use the link below:
+Whenever you used NSlookup it would, by default, automatically send queries directly to the DNS servers configured on the network adapter, regardless of the NRPT. Because ***nslookup*** is not aware of NRPT and you must use PowerShell cmdlet **Resolve-DNSName** to validate the DNS resolution while you are on P2S.
+However when it comes to the DNS configuration on the P2S, you can either set up the DNS servers form your VNET configuration as we have been doing or add the DNS entry to Azure VPN client XML file once downloaded from the portal.  For more information regarding adding the entry, please use the link below:
 <https://docs.microsoft.com/en-us/azure/vpn-gateway/openvpn-azure-ad-client#how-do-i-add-custom-dns-servers-to-the-vpn-client>
 
 For the Lab, I have provided the Root and Client certificates that will be used for the P2S configuration.
-Root cert:
-Client cert:
+**Root cert:** NetlabRootCert.cer
+**Client cert:** NetlabClientCert.pfx
+
+Point-to-Site configuration for the lab:
+
+![p2s_config](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/p2s_config.png)
+
+IPConfig from the client:
+
+![Ipconfig_client](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Ipconfig_client.png)
+
+DNS resolution working for both **nslookup** and  **Resolve-DNSName**:
+
+![p2s_resolution](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Ipconfig_client.png)
+
+SQL Database connection :
+
+![SQL_connection](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/SQL_connection.png)
+
+Next Steps: Investigate to see if the issue related to NRPT and the P2S has been resolved. The current P2S was running on a Windows 10  with the profile below:
+
+```typescript
+Edition: Windows 10 Enterprise
+Version: 21H1
+Installed on: ‎6/‎1/‎2020
+OS build: 19043.1288
+Experience: Windows Feature Experience Pack 120.2212.3920.0
+```
