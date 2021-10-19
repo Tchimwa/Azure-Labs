@@ -243,7 +243,7 @@ Issue from both VM  ***hub-vm01*** and ***op-vm01***:
 **Resolution**: The on-premises DNS solution must be configured to forward DNS traffic to Azure DNS via a conditional forwarder. The conditional forwarder references the DNS forwarder deployed in Azure.
 Here, the customer will need to deploy a server-level DNS forwarder on Azure to resolve the issue and handle the conditional forwarding coming from on-premises.
 
-![Conditional_DNS-Forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Conditional_DNS_Forwarder.png)
+![Conditional_DNS_Forwarder](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Conditional_DNS_Forwarder.png)
 
 Our custom DNS  server onpremises will be **dns-srv01 - 10.20.5.100**, and together we'll set up the conditional forwarder as it shows on the picture above. We can see that the conditional forwarder is set up to froward the request related to the database private endpoint domain **database.windows.net** to the DNS server we have on Azure **dns-fwd01 - 10.10.3.100**.
 I would like to mention that here the conditional forwarder is set up with the domain **database.windows.net** because the PaaS service used here is a database. Based on the PaaS service linked to the private endpoint, the domain changes. You can refer to the link below to find the right domain according to the PaaS service used.
@@ -284,7 +284,7 @@ IPConfig from the client:
 
 DNS resolution working for both **nslookup** and  **Resolve-DNSName**:
 
-![p2s_resolution](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/Ipconfig_client.png)
+![p2s_resolution](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/p2s_resolution.png)
 
 SQL Database connection :
 
