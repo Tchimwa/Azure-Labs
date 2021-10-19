@@ -274,6 +274,8 @@ For the Lab, I have provided the Root and Client certificates that will be used 
 **Root cert:** NetlabRootCert.cer
 **Client cert:** NetlabClientCert.pfx
 
+Install the client certificate on your PC for the test: <https://docs.microsoft.com/en-us/azure/vpn-gateway/point-to-site-how-to-vpn-client-install-azure-cert#installwin>
+
 Point-to-Site configuration for the lab:
 
 ![p2s_config](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/p2s_config.png)
