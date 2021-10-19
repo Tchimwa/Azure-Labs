@@ -259,7 +259,7 @@ NSLookup result from Azure where we can notice the DNS server 10.10.3.100 being 
 
 NSlookup results from on-premises where we can notice the DNS server 10.20.5.100 being used:
 
-![hub_conddns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/hub_pub.png)
+![hub_conddns](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/hub_conddns.png)
 
 ## Special scenario with the P2S connection
 
