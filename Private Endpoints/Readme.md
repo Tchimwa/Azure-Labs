@@ -290,7 +290,7 @@ SQL Database connection :
 
 ![SQL_connection](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/SQL_connection.png)
 
-Next Steps: Investigate to see if the issue related to NRPT and the P2S has been resolved. The current P2S was running on a Windows 10  with the profile below:
+**Next Steps**: Investigate to see if the issue related to NRPT and the P2S has been resolved. The current P2S was running on a Windows 10  with the profile below:
 
 ```typescript
 Edition: Windows 10 Enterprise
