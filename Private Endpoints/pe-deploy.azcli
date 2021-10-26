@@ -1,7 +1,25 @@
-$azrg               = "Cloud-rg"
-$azlocation     = "eastus"
-$oprg              = "Onpremises-rg"
-$oplocation    = "eastus2"
+#Clone the repo
+git clone https://github.com/Tchimwa/Azure-Labs
+# Change directory 
+cd ./Azure-Labs/Private\ Endpoints/
+# Edit the pelab-main.bicep to personalize and avoid confict  with other coworkers
+vim pelab-main.bicep
+#Press "i" to switch to insert mode, and add your initials at the end of value of each parameter below:
+param sqlsrvname string = 'netsqlsrv'
+param sqldbname string = 'netsqldb'
+#Press "Esc" to get out of the INSERT mode, then do :wq and press enter
+
+#We will do the same with the pe-onprem.bicep file and we'll add the initials at the end of value of parameters below
+
+param csrVMName string = 'csr01v-netlab'
+param outPublicIPname string = 'outside-pip'
+param opbastionpip string = 'op-bastion-pip'
+
+#Variables
+azrg="Cloud-rg"
+azlocation="eastus"
+oprg="Onpremises"
+oplocation="eastus2"
 
 # Create the resource groups
 az group create --name $azrg --location $azlocation 
@@ -10,4 +28,3 @@ az group create --name $oprg --location $oplocation
 #Create the deployment groups
 az deployment group create --resource-group $azrg --template-file pelab-main.bicep
 az deployment group create --resource-group $oprg --template-file pe-onprem.bicep
-ffff
