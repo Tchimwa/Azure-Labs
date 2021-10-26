@@ -31,7 +31,7 @@ Below, we have the representation of the lab we will work on:
 
 1. Use the ***pe-deploy.azcli*** file to deploy the BICEP templates. Feel free to change the location or the name of the resource group as it pleases you.
 
-2. Use the following [link](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15#download-ssms) below to download and install SSMS on the **hub-vm01** and **op-vm01** virtual machines.
+2. Use the following [link](https://www.microsoft.com/en-us/download/details.aspx?id=15366) below to download and install SSMS on the **hub-vm01** and **op-vm01** virtual machines.
     You might be prompted to install NETFramework 2.0 on the server before installing SMSS, please use this [link](https://www.interserver.net/tips/kb/enable-net-framework-3-5-windows-server/#:~:text=Enable%20.NET%20Framework%203.5%20on%20Windows%20Server%201,the%20%E2%80%98Close%E2%80%99%20button%20to%20finalize%20the%20installation%20process) to complete the operation, then install SMSS.
 
 3. From the portal, make sure to toggle to "Yes" on  "Allow Azure services and resources to access this server"
