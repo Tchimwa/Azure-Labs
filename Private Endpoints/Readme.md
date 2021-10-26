@@ -36,6 +36,8 @@ Below, we have the representation of the lab we will work on:
 
 3. From the portal, make sure to toggle to "Yes" on  "Allow Azure services and resources to access this server"
 
+4. Download the PS Tools on all the VMs
+
 ## Task 1: Set up the Active-Active BGP VPN connection between On-premises and Azure
 
 1. Configure the connection on Azure to handle the active-active configuration
@@ -153,7 +155,7 @@ Use the commands below to check the status of the connection and to check the ro
 
 ```typescript
 az network vpn-connection show --name Hub-to-Onpremises-AA --resource-group Cloud-rg --query "{status: connectionStatus}"
-az network vnet-gateway list-learned-routes --resource-group Cloud-rg -name cl-vpn-gw -o table
+az network vnet-gateway list-learned-routes --resource-group Cloud-rg --name cl-vpn-gw -o table
 az network vnet-gateway list-advertised-routes --resource-group Cloud-rg --name cl-vpn-gw --peer 1.1.1.1 -o table
 ```
 
