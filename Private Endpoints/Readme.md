@@ -31,12 +31,10 @@ Below, we have the representation of the lab we will work on:
 
 1. Use the ***pe-deploy.azcli*** file to deploy the BICEP templates. Feel free to change the location or the name of the resource group as it pleases you.
 
-2. Use the following [link](https://www.microsoft.com/en-us/download/details.aspx?id=15366) below to download and install SSMS on the **hub-vm01** and **op-vm01** virtual machines.
+2. Use the following [link](https://docs.microsoft.com/en-us/sql/ssms/download-sql-server-management-studio-ssms?view=sql-server-ver15) below to download and install SSMS on the **hub-vm01** and **op-vm01** virtual machines.
     You might be prompted to install NETFramework 2.0 on the server before installing SMSS, please use this [link](https://www.interserver.net/tips/kb/enable-net-framework-3-5-windows-server/#:~:text=Enable%20.NET%20Framework%203.5%20on%20Windows%20Server%201,the%20%E2%80%98Close%E2%80%99%20button%20to%20finalize%20the%20installation%20process) to complete the operation, then install SMSS.
 
-3. From the portal, make sure to toggle to "Yes" on  "Allow Azure services and resources to access this server"
-
-4. Download the PS Tools on all the VMs
+3. Download the PS Tools on all the VMs
 
 ## Task 1: Set up the Active-Active BGP VPN connection between On-premises and Azure
 
@@ -185,6 +183,7 @@ From the left panel Menu on the netsqlsrv portal, under **Security**, select **P
 - Zone name: **privatelink.database.windows.net**
 - Notice also that during the creation you can already create a private DNS zone, that will work for Azure resources that uses the Azure DNS.
 - Check the PE status and sure that is "***Approved**", also check the private DNS zone and make there is a record for the sql private endpoint.
+- From the portal, make sure to toggle to "Yes" on  "Allow Azure services and resources to access this server"
 
 ![pe-security](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/PE_Security.png)
 
