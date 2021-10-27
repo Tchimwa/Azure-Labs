@@ -28,3 +28,5 @@ az group create --name $oprg --location $oplocation
 #Create the deployment groups
 az deployment group create --resource-group $azrg --template-file pelab-main.bicep
 az deployment group create --resource-group $oprg --template-file pe-onprem.bicep
+
+End of the lab
