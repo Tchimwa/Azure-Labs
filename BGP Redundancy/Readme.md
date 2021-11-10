@@ -2,7 +2,7 @@
 
 With the advent of the cloud, we've been finding more enterprises with virtual private connections from their on-premises infrastructure to their cloud environment. To minimize or avoid the downtime which can result to lost revenue and probably lost of customers, most of the enterprises find important and critical to have a redundant connectivity to their cloud environment. Despite the fact that it can be costly and complex, redundancy will be essential to keep the connectivity always UP. When it comes to path control, depending on the applications ran in their network, some companies choose to have different path for different type of traffic especially for less latency and better efficiency.
 
-In this lab, we will have 4 VNETs: one simulating the customer's environment on-premises, a Hub and spoke VNETs on one region, and another one as a branch VNET on a different region. The Hub and  Spoke Vnets will be peered together with a VPN Gateway on the Hub Vnet. The Hub and the Branch will be connected using a Vnet-to-Vnet connection with BGP and  the On-premises Vnet will be connected to the Hub and the Branch Vnets using a Site-to-site VPN connection with BGP as well. We'll see how the redundancy has been implemented to access each of the regions, and different case scenarios of path control totally dependant of the customer.
+In this lab, we will have 4 VNETs: one simulating the customer's environment on-premises, a Hub and spoke VNETs on one region, and another one as a branch VNET on a different region. The Hub and  Spoke Vnets will be peered together with a VPN Gateway on the Hub Vnet. The Hub and the Branch will be connected using a Vnet-to-Vnet connection with BGP and  the On-premises Vnet will be connected to the Hub and the Branch Vnets using a Site-to-site VPN connection with BGP as well. We'll see how the redundancy has been implemented to access each of the regions, and different case scenarios of path control totally dependent of the customer.
 
 ## Prerequisites
 
@@ -73,6 +73,6 @@ The backup path will become active, and we'll notice that the next hop has chang
 
 ## Path Control with BGP
 
-We can just start talking about Path control with BGP without brushing up the BGP attributes used to implement the Path control. In fact, BGP used the path attributes below to implement the best path selection
+We can't just start talking about Path control with BGP without brushing up the BGP attributes used to implement the Path control. In fact, BGP used the path attributes below to implement the best path selection
 
 Reference: <https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/13753-25.html>
