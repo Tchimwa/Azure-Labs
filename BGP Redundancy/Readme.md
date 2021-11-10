@@ -15,21 +15,21 @@ Having an Azure subscription, and understand BGP and its different attributes.
 
 Below is the lab infrastructure we will be working with. Please use the file **deploy.azcli** to deploy the environment.
 
-![Infrastructure_lab](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/pe-infrastructure.png)
+![Infrastructure_lab](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/BGP%20Redundancy.png)
 
 ## Redundancy
 
 Below we will study and see the redundancy implemented on each region using BGP. There are always 2 ways to access each region from any of them. In case of a network failure, the traffic will flow from the first to the redundant or backup path to avoid downtime.
 
-![show_ip_route](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/pe-infrastructure.png)
-
 ### From On-premises to both regions
 
 From the routing table, we can clearly see the best route to each region as we can below.
 
+![show_ip_route](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/show_ip_route.png)
+
 However, from the BGP topology table, we can actually see that both regions have at least 2 ways that the router can use to reach out to them. This is idolizing the redundancy. If the best route failed, the second route despite the fact that it goes through another region will be available for use.
 
-![show_ip_bgp_topology](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/pe-infrastructure.png)
+![show_ip_bgp_topology](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/show_ip_bgp_topo.png)
 
 - In *Yellow*, we have the best route actually used the router csr01v and written in the routing table  
 - In *Green*, we have the redundant path which is the back up route. from what we can see it goes through 2 different AS when the best route is just one AS away.
@@ -43,7 +43,7 @@ The best path is just an AS away from Hub-GW (in *Green*), and the backup path i
 az network vnet-gateway list-learned-routes -g azure-rg -n Hub-GW -o table
 ```
 
-![Hub_learned_routes](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/pe-infrastructure.png)
+![Hub_learned_routes](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/Hub_learned_routes.png)
 
 - In *Green*, it is the best path
 - In *Yellow* the backup route
@@ -56,7 +56,7 @@ Same as the Hub-GW earlier, but here we have an additional route due to the Spok
 az network vnet-gateway list-learned-routes -g azure-rg -n Branch-GW -o table
 ```
 
-![Branch_learned_routes](https://github.com/Tchimwa/Azure-Labs/blob/main/Private%20Endpoints/Images/pe-infrastructure.png)
+![Branch_learned_routes](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/Branch_learned_routes.png)
 
 - In *Green*, it is the best path
 - In *Yellow* the backup route
