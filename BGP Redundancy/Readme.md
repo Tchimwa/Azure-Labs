@@ -61,6 +61,16 @@ az network vnet-gateway list-learned-routes -g azure-rg -n Branch-GW -o table
 - In *Green*, it is the best path
 - In *Yellow* the backup route
 
+### Redundancy Test
+
+Since the VPN connection from on-premises to the Hub is using the Tunnel 1 as we can see on the pic below, let's simulate a network failure by shutting down the Tunnel1.
+
+![Redundancy_test](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/Redundancy_test.png)
+
+The backup path will become active, and we'll notice that the next hop has changed from 172.16.0.254 (Hub-GW BGP peer IP) to be the BGP peer address of the Branch-GW which 10.10.0.254
+
+![Redundancy_result](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/Redundancy_result.png)
+
 ## Path Control with BGP
 
 We can just start talking about Path control with BGP without brushing up the BGP attributes used to implement the Path control. In fact, BGP used the path attributes below to implement the best path selection
