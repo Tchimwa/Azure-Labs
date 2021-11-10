@@ -1,0 +1,333 @@
+
+#Creating a resource Group for the On-premises for the Cisco CSR router
+
+az group create --name csr-rg --location eastus
+
+#Creating the On-premises VNET to host the router
+
+az network nsg create --name csr-nsg --resource-group csr-rg --location eastus 
+az network nsg rule create --name Allow-NSG --nsg-name csr-nsg --resource-group csr-rg --access Allow --description "Allowing SSH to the VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 22
+
+az network vnet create --resource-group csr-rg --location eastus --name On-premises --address-prefixes 192.168.0.0/16 --subnet-name Outside --subnet-prefix 192.168.0.0/24
+az network vnet subnet create --resource-group csr-rg --name Inside --vnet-name On-premises --address-prefix 192.168.1.0/24 --network-security-group csr-nsg
+az network vnet subnet create --resource-group csr-rg --name VM --vnet-name On-premises --address-prefix 192.168.2.0/24 --network-security-group csr-nsg
+az network vnet subnet create --resource-group csr-rg --name AzureBastionSubnet --vnet-name On-premises --address-prefix 192.168.3.0/24
+
+#Creating the Router
+
+az network public-ip create --name csr-pip --resource-group csr-rg --idle-timeout 30 --allocation-method Static --sku Standard
+az network nic create --name csrnicOut01 --resource-group csr-rg --vnet On-premises --subnet Outside --public-ip-address csr-pip --private-ip-address 192.168.0.4 --ip-forwarding
+az network nic create --name csrnicIn01 --resource-group csr-rg --vnet On-premises --subnet Inside --private-ip-address 192.168.1.4 --ip-forwarding
+az vm create --resource-group csr-rg --location eastus --name csr01v --size Standard_D2_v2 --nics csrnicOut01 csrnicIn01 --image cisco:cisco-csr-1000v:17_3_3-byol:17.3.320210317 --admin-username azure --admin-password Networking2021#
+
+#Creating the VM on the On-premises VNET for testing
+
+az network public-ip create --name csrbastion-pip --resource-group csr-rg --idle-timeout 30 --allocation-method Static --sku Standard --location eastus
+az network bastion create --location eastus --name csr-bastion --public-ip-address csrbastion-pip --resource-group csr-rg --vnet-name On-premises
+
+az network nic create --name vmnic01 --resource-group csr-rg --vnet On-premises --subnet VM --private-ip-address 192.168.2.100 --ip-forwarding
+az vm create --name VM --resource-group csr-rg --location eastus --image  UbuntuLTS --nics vmnic01 --admin-username azure --admin-password Networking2021# 
+
+az network nic create --name vminnic01 --resource-group csr-rg --vnet On-premises --subnet Inside --private-ip-address 192.168.1.100 --ip-forwarding
+az vm create --name VM-Inside --resource-group csr-rg --location eastus --image  UbuntuLTS --nics vminnic01 --admin-username azure --admin-password Networking2021# 
+
+#Creation of the route table
+
+az network route-table create --name OnPrem-RT --resource-group csr-rg --location eastus
+az network route-table route create --name Hub-rte --resource-group csr-rg --route-table-name OnPrem-RT --address-prefix 192.168.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 192.168.1.4
+az network route-table route create --name Spoke-rte --resource-group csr-rg --route-table-name OnPrem-RT --address-prefix 100.0.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 192.168.1.4
+az network route-table route create --name Branch-rte --resource-group csr-rg --route-table-name OnPrem-RT --address-prefix 10.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 192.168.1.4
+az network vnet subnet update --name VM --vnet-name On-premises --resource-group csr-rg --route-table OnPrem-RT
+az network vnet subnet update --name Inside --vnet-name On-premises --resource-group csr-rg --route-table OnPrem-RT
+
+# Creation of the Azure VNETs
+
+az group create --name azure-rg --location westus
+
+#NSG
+
+az network nsg create --name hub-nsg --resource-group azure-rg --location westus
+az network nsg rule create --name Allow-NSG --nsg-name hub-nsg --resource-group azure-rg --access Allow --description "Allowing RDP to the VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
+
+az network nsg create --name branchvm-nsg --resource-group azure-rg --location southcentralus
+az network nsg rule create --name Allow-NSG --nsg-name branchvm-nsg --resource-group azure-rg --access Allow --description "Allowing RDP to the VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
+
+az network nsg create --name spokevm-nsg --resource-group azure-rg --location eastus2
+az network nsg rule create --name Allow-NSG --nsg-name spokevm-nsg --resource-group azure-rg --access Allow --description "Allowing RDP to the VM" --priority 110 --protocol TCP --direction Inbound --source-address-prefixes '*' --source-port-ranges '*' --destination-address-prefixes '*' --destination-port-ranges 3389
+
+#Hub Vnet
+
+az network vnet create --resource-group azure-rg --location westus --name Azcloud --address-prefixes 172.16.0.0/16 --subnet-name GatewaySubnet --subnet-prefix 172.16.0.0/24
+az network vnet subnet create --resource-group azure-rg --name Inside --vnet-name Azcloud --address-prefix 172.16.1.0/24 --network-security-group hub-nsg
+az network vnet subnet create --resource-group azure-rg --name VM --vnet-name Azcloud --address-prefix 172.16.2.0/24 --network-security-group hub-nsg
+az network vnet subnet create --resource-group azure-rg --name AzureBastionSubnet --vnet-name Azcloud --address-prefix 172.16.3.0/24
+
+az network public-ip create --name HubBastion-pip --resource-group azure-rg --idle-timeout 30 --allocation-method Static --sku Standard
+az network bastion create --location westus --name Hub-bastion --public-ip-address HubBastion-pip --resource-group azure-rg --vnet-name Azcloud
+
+#Spoke Vnet
+
+az network vnet create --resource-group azure-rg --location eastus2 --name AzSpoke --address-prefixes 100.0.0.0/16 --subnet-name Prod --subnet-prefix 100.0.0.0/24 --network-security-group spokevm-nsg
+az network vnet subnet create --resource-group azure-rg --name Staging --vnet-name AzSpoke --address-prefix 100.0.1.0/24 --network-security-group spokevm-nsg
+az network vnet subnet create --resource-group azure-rg --name Dev --vnet-name AzSpoke --address-prefix 100.0.2.0/24 --network-security-group spokevm-nsg
+
+#Branch Vnet
+
+az network vnet create --resource-group azure-rg --location southcentralus --name Branch  --address-prefixes 10.10.0.0/16 --subnet-name GatewaySubnet --subnet-prefix 10.10.0.0/24
+az network vnet subnet create --resource-group azure-rg --name Inside --vnet-name Branch  --address-prefix 10.10.1.0/24 --network-security-group branchvm-nsg
+az network vnet subnet create --resource-group azure-rg --name VM --vnet-name Branch  --address-prefix 10.10.2.0/24 --network-security-group branchvm-nsg
+az network vnet subnet create --resource-group azure-rg --name AzureBastionSubnet --vnet-name Branch  --address-prefix 10.10.3.0/24
+
+az network public-ip create --name BranchBastion-pip --resource-group azure-rg --idle-timeout 30 --allocation-method Static --sku Standard --location southcentralus
+az network bastion create --location southcentralus --name Branch-bastion --public-ip-address BranchBastion-pip --resource-group azure-rg --vnet-name Branch
+
+#Peerings between Azcloud and AzSpoke VNETs
+
+SpokeId=$(az network vnet show --resource-group azure-rg --name AzSpoke --query id --out tsv)
+HubId=$(az network vnet show --resource-group azure-rg --name Azcloud --query id --out tsv)
+
+az network vnet peering create --name Spoke-to-Hub --resource-group azure-rg --vnet-name AzSpoke --remote-vnet $HubId --allow-vnet-access --use-remote-gateways --allow-forwarded-traffic
+az network vnet peering create --name Hub-to-Spoke --resource-group azure-rg --vnet-name Azcloud --remote-vnet $SpokeId --allow-forwarded-traffic --allow-vnet-access --allow-gateway-transit
+
+#Creation of the VPN Gateways 
+
+az network public-ip create --resource-group azure-rg --location westus --name hubgw-pip --allocation-method Dynamic
+az network vnet-gateway create --name Hub-GW --location westus --public-ip-addresses hubgw-pip --resource-group azure-rg --vnet Azcloud --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1 --asn 65010 --bgp-peering-address 172.16.0.254
+
+az network public-ip create --resource-group azure-rg --location southcentralus --name branchgw-pip --allocation-method Dynamic 
+az network vnet-gateway create --name Branch-GW --location southcentralus --public-ip-addresses branchgw-pip --resource-group azure-rg --vnet Branch --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1 --asn 65020 --bgp-peering-address 10.10.0.254 
+
+#Creation the both VPN connections from the HUb to the Onpremises and from the Branch to the Onpremises
+
+az network public-ip show --resource-group csr-rg --name csr-pip --query "{address: ipAddress}"
+az network public-ip show --resource-group azure-rg --name hubgw-pip --query "{address: ipAddress}"
+az network public-ip show --resource-group azure-rg --name branchgw-pip --query "{address: ipAddress}"
+az network vnet-gateway list --query [].[name,bgpSettings.asn,bgpSettings.bgpPeeringAddress] -o table --resource-group azure-rg
+
+## Local network Gateways : Hub-lng and Branch-lng
+
+az network local-gateway create --gateway-ip-address ***csr-pip*** --name Hub-lng --resource-group azure-rg --asn 65015 --bgp-peering-address 1.1.1.1 --location westus
+az network local-gateway create --gateway-ip-address ***csr-pip*** --name Branch-lng --resource-group azure-rg --asn 65015 --bgp-peering-address 1.1.1.1 --location southcentralus
+
+## VPN Connections
+
+az network vpn-connection create --name Hub-to-Onpremises --resource-group azure-rg --vnet-gateway1 Hub-GW --location westus --local-gateway2 Hub-lng --enable-bgp --shared-key Networking2021#
+az network vpn-connection create --name Branch-to-Onpremises --resource-group azure-rg --vnet-gateway1 Branch-GW --location southcentralus --local-gateway2 Branch-lng --enable-bgp --shared-key Networking2021#
+
+## Vnet-to-VNet connections between Hub and Branch
+
+BranchId=$(az network vnet-gateway show --resource-group azure-rg --name Branch-GW --query id --out tsv)
+HubId=$(az network vnet-gateway show --resource-group azure-rg --name Hub-GW --query id --out tsv)
+
+az network vpn-connection create --name Hub-to-Branch --vnet-gateway1 $HubId --vnet-gateway2 $BranchId  --location westus  --enable-bgp  --resource-group azure-rg --shared-key Networking2021# 
+az network vpn-connection create --name Branch-to-Hub --vnet-gateway1 $BranchId --vnet-gateway2 $HubId  --location southcentralus  --enable-bgp  --resource-group azure-rg --shared-key Networking2021# 
+
+#Creation of the VMs
+
+az network nic create --resource-group azure-rg --name hubvmnic01 --location westus --subnet VM --private-ip-address 172.16.2.100 --vnet-name Azcloud 
+az vm create --name AzVM-Hub --resource-group azure-rg --location westus --image Win2012R2Datacenter --nics hubvmnic01 --admin-username azure --admin-password Networking2021# 
+
+az network nic create --resource-group azure-rg --name spokevmnic01 --location eastus2 --subnet Dev --private-ip-address 100.0.2.100 --vnet-name AzSpoke
+az vm create --name AzVM-Spoke --resource-group azure-rg --location eastus2 --image Win2012R2Datacenter --nics spokevmnic01 --admin-username azure --admin-password Networking2021# 
+
+az network nic create --resource-group azure-rg --name branchvmnic01 --location southcentralus --subnet VM --private-ip-address 10.10.2.100 --vnet-name Branch
+az vm create --name AzVM-Branch --resource-group azure-rg --location southcentralus --image Win2012R2Datacenter --nics branchvmnic01 --admin-username azure --admin-password Networking2021# 
+
+#Configuration of the Cisco CSR1000v
+
+#Replace **hubgw-pip** and **branchgw-pip** by their values before running the configuration.
+# Use Azure Bastion to SSH into the csr01v using the login information provided when creating the VM, once in, use the command "config t" to get into the configuration mode then run the code below with the values of **hubgw-pip** and **branchgw-pip** already replaced.
+
+ip route 192.168.2.0 255.255.255.0 192.168.1.1
+crypto ikev2 proposal AzIkev2Proposal
+ encryption aes-cbc-256
+ integrity sha1
+ group 2
+ exit
+crypto ikev2 policy AzIkev2Pol 
+ match address local 192.168.0.4
+ proposal AzIkev2Proposal
+ exit     
+crypto ikev2 keyring AzToOnPremKeyring
+ peer **hubgw-pip**
+  address **hubgw-pip**
+  pre-shared-key Networking2021#
+  exit
+ peer **branchgw-pip**
+  address **branchgw-pip**
+  pre-shared-key Networking2021#
+  exit
+ exit
+crypto ikev2 profile AzIkev2Prof
+ match address local 192.168.0.4
+ match identity remote address **hubgw-pip** 255.255.255.255 
+ match identity remote address **branchgw-pip** 255.255.255.255 
+ authentication remote pre-share
+ authentication local pre-share
+ keyring local AzToOnPremKeyring
+ lifetime 28800
+ dpd 10 5 on-demand
+ exit
+crypto ipsec transform-set Az-xformSet esp-gcm 256 
+ mode tunnel
+ exit
+crypto ipsec profile Az-IPSec-Profile
+ set transform-set Az-xformSet 
+ set ikev2-profile AzIkev2Prof
+ exit
+interface Loopback11
+ ip address 1.1.1.1 255.255.255.255
+ no shut
+ exit
+interface Tunnel1
+ ip address 11.11.11.11 255.255.255.255
+ no shut
+ ip tcp adjust-mss 1350
+ tunnel source 192.168.0.4
+ tunnel mode ipsec ipv4
+ tunnel destination **hubgw-pip**
+ tunnel protection ipsec profile Az-IPSec-Profile
+ exit
+interface Tunnel2
+ ip address 22.22.22.22 255.255.255.255
+ no shut
+ ip tcp adjust-mss 1350
+ tunnel source 192.168.0.4
+ tunnel mode ipsec ipv4
+ tunnel destination **branchgw-pip**
+ tunnel protection ipsec profile Az-IPSec-Profile
+ exit
+ip route 172.16.0.254 255.255.255.255 Tunnel1
+ip route 10.10.0.254 255.255.255.255 Tunnel2
+router bgp 65015
+ bgp router-id 1.1.1.1
+ bgp log-neighbor-changes
+ neighbor 172.16.0.254 remote-as 65010
+ neighbor 172.16.0.254 ebgp-multihop 255
+ neighbor 172.16.0.254 update-source Loopback11
+ neighbor 10.10.0.254 remote-as 65020
+ neighbor 10.10.0.254 ebgp-multihop 255
+ neighbor 10.10.0.254 update-source Loopback11
+ address-family ipv4
+  network 192.168.2.0 mask 255.255.255.0
+  neighbor 172.16.0.254 activate
+  neighbor 10.10.0.254 activate
+  maximum-paths 2
+  exit-address-family
+ exit
+
+
+# Verification of the routes on the  Hub-GW
+
+az network vnet-gateway list-advertised-routes -g azure-rg -n Hub-GW -o table --peer 1.1.1.1
+
+Network        NextHop       Origin    AsPath       Weight
+-------------  ------------  --------  -----------  --------
+172.16.0.0/16  172.16.0.254  Igp       65010        0
+10.10.0.0/16   172.16.0.254  Igp       65010-65020  0
+100.0.0.0/16   172.16.0.254  Igp       65010        0
+
+az network vnet-gateway list-advertised-routes -g azure-rg -n Hub-GW -o table --peer 10.10.0.254
+
+Network         NextHop       Origin      AsPath       Weight
+--------------  ------------  ----------  -----------  --------
+172.16.0.0/16   172.16.0.254  Igp         65010        0
+192.168.2.0/24  172.16.0.254  Igp         65010-65015  0
+22.22.22.22/32  172.16.0.254  Incomplete  65010-65015  0
+192.168.0.0/24  172.16.0.254  Incomplete  65010-65015  0
+192.168.1.0/24  172.16.0.254  Incomplete  65010-65015  0
+11.11.11.11/32  172.16.0.254  Incomplete  65010-65015  0
+100.0.0.0/16    172.16.0.254  Igp         65010        0
+
+az network vnet-gateway list-learned-routes -g azure-rg -n Hub-GW -o table
+
+Network         Origin    SourcePeer    AsPath       Weight    NextHop
+--------------  --------  ------------  -----------  --------  -----------
+172.16.0.0/16   Network   172.16.0.254               32768
+10.10.0.254/32  Network   172.16.0.254               32768
+10.10.0.0/16    EBgp      10.10.0.254   65020        32768     10.10.0.254
+11.11.11.11/32  EBgp      1.1.1.1       65015        32768     1.1.1.1
+192.168.0.0/24  EBgp      1.1.1.1       65015        32768     1.1.1.1
+192.168.1.0/24  EBgp      1.1.1.1       65015        32768     1.1.1.1
+1.1.1.1/32      Network   172.16.0.254               32768
+22.22.22.22/32  EBgp      1.1.1.1       65015        32768     1.1.1.1
+192.168.2.0/24  EBgp      1.1.1.1       65015        32768     1.1.1.1
+100.0.0.0/16    Network   172.16.0.254               32768
+10.10.0.0/16    EBgp      1.1.1.1       65015-65020  32768     1.1.1.1
+11.11.11.11/32  EBgp      10.10.0.254   65020-65015  32768     10.10.0.254
+192.168.0.0/24  EBgp      10.10.0.254   65020-65015  32768     10.10.0.254
+192.168.1.0/24  EBgp      10.10.0.254   65020-65015  32768     10.10.0.254
+22.22.22.22/32  EBgp      10.10.0.254   65020-65015  32768     10.10.0.254
+192.168.2.0/24  EBgp      10.10.0.254   65020-65015  32768     10.10.0.254
+
+#Verification  Cisco CSRv
+
+show ip route
+
+csr01v#show ip route
+Codes: L - local, C - connected, S - static, R - RIP, M - mobile, B - BGP
+       D - EIGRP, EX - EIGRP external, O - OSPF, IA - OSPF inter area 
+       N1 - OSPF NSSA external type 1, N2 - OSPF NSSA external type 2
+       E1 - OSPF external type 1, E2 - OSPF external type 2, m - OMP
+       n - NAT, Ni - NAT inside, No - NAT outside, Nd - NAT DIA
+       i - IS-IS, su - IS-IS summary, L1 - IS-IS level-1, L2 - IS-IS level-2
+       ia - IS-IS inter area, * - candidate default, U - per-user static route
+       H - NHRP, G - NHRP registered, g - NHRP registration summary
+       o - ODR, P - periodic downloaded static route, l - LISP
+       a - application route
+       + - replicated route, % - next hop override, p - overrides from PfR
+       & - replicated local route overrides by connected
+
+Gateway of last resort is 192.168.0.1 to network 0.0.0.0
+
+S*    0.0.0.0/0 [1/0] via 192.168.0.1
+      1.0.0.0/32 is subnetted, 1 subnets
+C        1.1.1.1 is directly connected, Loopback1
+      10.0.0.0/8 is variably subnetted, 2 subnets, 2 masks
+B        10.10.0.0/16 [20/0] via 10.10.0.254, 2d00h
+S        10.10.0.254/32 is directly connected, Tunnel2
+      11.0.0.0/32 is subnetted, 1 subnets
+C        11.11.11.11 is directly connected, Tunnel1
+      22.0.0.0/32 is subnetted, 1 subnets
+C        22.22.22.22 is directly connected, Tunnel2
+      100.0.0.0/16 is subnetted, 1 subnets
+B        100.0.0.0 [20/0] via 172.16.0.254, 00:15:44
+      168.63.0.0/32 is subnetted, 1 subnets
+S        168.63.129.16 [254/0] via 192.168.0.1
+      169.254.0.0/32 is subnetted, 1 subnets
+S        169.254.169.254 [254/0] via 192.168.0.1
+      172.16.0.0/16 is variably subnetted, 2 subnets, 2 masks
+B        172.16.0.0/16 [20/0] via 172.16.0.254, 00:15:44
+S        172.16.0.254/32 is directly connected, Tunnel1
+      192.168.0.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.0.0/24 is directly connected, GigabitEthernet1
+L        192.168.0.4/32 is directly connected, GigabitEthernet1
+      192.168.1.0/24 is variably subnetted, 2 subnets, 2 masks
+C        192.168.1.0/24 is directly connected, GigabitEthernet2
+L        192.168.1.4/32 is directly connected, GigabitEthernet2
+S     192.168.2.0/24 [1/0] via 192.168.1.1
+
+
+#csr01v#show ip bgp topo * 
+For address family: IPv4 Unicast
+
+BGP table version is 5, local router ID is 1.1.1.1
+Status codes: s suppressed, d damped, h history, * valid, > best, i - internal, 
+              r RIB-failure, S Stale, m multipath, b backup-path, f RT-Filter, 
+              x best-external, a additional-path, c RIB-compressed, 
+              t secondary path, L long-lived-stale,
+Origin codes: i - IGP, e - EGP, ? - incomplete
+RPKI validation codes: V valid, I invalid, N Not found
+
+     Network          Next Hop            Metric LocPrf Weight Path
+ *    10.10.0.0/16     172.16.0.254                           0 65010 65020 i
+ *>                    10.10.0.254                            0 65020 i
+ *    100.0.0.0/16     10.10.0.254                            0 65020 65010 i
+ *>                    172.16.0.254                           0 65010 i
+ *    172.16.0.0       10.10.0.254                            0 65020 65010 i
+ *>                    172.16.0.254                           0 65010 i
+ *>   192.168.2.0      192.168.1.1              0         32768 i
+
+
+
+
