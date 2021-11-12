@@ -73,6 +73,114 @@ The backup path will become active, and we'll notice that the next hop has chang
 
 ## Path Control with BGP
 
-We can't just start talking about Path control with BGP without brushing up the BGP attributes used to implement the Path control. In fact, BGP used the path attributes below to implement the best path selection
+We can't just start talking about Path control with BGP without brushing up the main BGP attributes used to implement the Path control. In fact, BGP used the path attributes below to implement the best path selection
 
 Reference: <https://www.cisco.com/c/en/us/support/docs/ip/border-gateway-protocol-bgp/13753-25.html>
+
+### Weight
+
+**Description:** Administrative Weight, Cisco Proprietary, Optional, non-transitive so only valid locally (intra-AS),
+Default value for routes learned through BGP is 0, 32768 if the route was advertised locally
+**Preference:** Highest
+
+### Local Preference
+
+**Description:**Well-known Discretionary so it is recognized, and might or might not be included in BGP Update, non-transitive
+Default value is 100
+**Preference:** Highest
+
+### Locally Originated
+
+**Description:**Optional, non-transitive
+**Preference:** Prefer self-originated prefix (with next hop 0.0.0.0 ) over same prefix we learn from neighbor
+
+### AS_PATH
+
+**Description:**Well-known, Mandatory so it has to be included in the BGP update, transitive ( inter-AS)
+Can do inbound or outbound for all Well-known, Mandatory attributes
+**Preference:** Prefer shortest path
+
+### Origin
+
+**Description:**Well-known, Mandatory so it has to be included in the BGP update, transitive ( inter-AS)
+**Preference:**Lowest (IGP) -  IGP (i) is better Redistributed/incomplete(?)
+IGP(i):  Prefixes learned internally through the AS by iBGP or added using the network command
+
+### MED
+
+**Description:**Optional, non-transitive
+Attribute exchanged between eBGP Peers to inform the external peers of the entry point of the AS
+Default value is 0
+**Preference:**Lowest
+
+### BGP AD - Path Type
+
+**Description:**Path type, Optional
+**Preference:**eBGP is preferred over iBGP
+
+### Router-ID
+
+**Description:** BGP uses router-id to identify its peers
+**Preference:**Path with lowest router-id is preferred
+
+### Case scenario
+
+The customer just acquires a company named WVD that has a Vnet in the *Central US* region and he created a Vnet-to-Vnet BGP connection with the Branch Vnet for personal reasons. Since the bandwidth between the On-premises and the Branch Vnet is not enough to handle the traffic to the new Vnet WVD, he would like the traffic from On-premises to the new Vnet WVD to go through the Hub.
+
+#### Requirements
+
+- New Vnet named WVD peered to the Branch Vnet
+- Traffic to WVD: On-premises - Hub - Branch - WVD
+
+#### New Infrastructure with the traffic paths desired by the customer
+
+- In *Red*, Traffic to WVD
+
+![BGP_Redundancy _Scenario](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/BGP%20Redundancy_Scenario.png)
+
+#### WVD creation and peering connection with Branch
+
+```typescript
+az network vnet create --resource-group azure-rg --location centralus --name WVD  --address-prefixes 200.0.0.0/16 --subnet-name GatewaySubnet --subnet-prefix 200.0.0.0/24
+az network vnet subnet create --resource-group azure-rg --name Servers --vnet-name WVD  --address-prefix 200.0.1.0/24
+az network vnet subnet create --resource-group azure-rg --name Dev --vnet-name WVD  --address-prefix 200.0.2.0/24
+
+az network public-ip create --resource-group azure-rg --location centralus --name wvdgw-pip --allocation-method Dynamic
+az network vnet-gateway create --name WVD-GW --location centralus --public-ip-addresses wvdgw-pip --resource-group azure-rg --vnet WVD --gateway-type Vpn --vpn-type RouteBased --sku VpnGw1 --asn 65030 --bgp-peering-address 200.0.0.254
+
+$WVDId = az network vnet-gateway show --resource-group azure-rg --name WVD-GW --query id --out tsv
+$BranchId = az network vnet-gateway show --resource-group azure-rg --name Branch-GW --query id --out tsv
+
+az network vpn-connection create --name Branch-to-WVD --vnet-gateway1 $BranchId --vnet-gateway2 $WVDId  --location southcentralus --enable-bgp  --resource-group azure-rg --shared-key Networking2021# 
+az network vpn-connection create --name WVD-to-Branch --vnet-gateway1 $WVDId --vnet-gateway2 $BranchId  --location centralus  --enable-bgp  --resource-group azure-rg --shared-key Networking2021# 
+```
+
+#### Path control for the traffic to WVD
+
+The path control will be implemented on the Cisco router csr01v hosted on-premises for both traffic path, for demonstration we will be using different BDP attributes to accomplish it.
+
+From csr01v, we can see that the route to join 200.0.0.0/16  is currently through Branch-GW which has 10.10.0.254 as peer address. Based on AS_PATH, The router actually chooses that path because it has the shortest path to get to WVD, it is only one AS (65020) away.
+
+![WVD_Current_Route](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/WVD_Current_Route.png)
+
+To complete the requirement of the customer, we will use the BGP attribute "AS_Path". We'll be using the path prepend to affect the routing. It consists of increasing the length of a path to make it less preferable for best route. Access-list" and "route-map" to only affect the route to 200.0.0.0.
+
+- Commands
+
+```typescript
+csr01v(config)#access-list 1 permit 200.0.0.0 0.0.255.255
+csr01v(config)#route-map WVD_Prepend permit 10
+csr01v(config-route-map)#match ip address 1
+csr01v(config-route-map)#set as-path prepend last-as 5                                                                                                                                      
+csr01v(config-route-map)#route-map WVD_Prepend permit 5000                                                                                                                                                                            
+csr01v(config-route-map)#router bgp 65015
+csr01v(config-router)#neighbor 10.10.0.254 route-map WVD_Prepend in 
+```
+
+- Result of the command
+
+Below we can notice that the length of the path through 10.10.0.254 bas been increased and the next-hop has been changed. Now the best route to 200.0.0.0/16 goes through 172.16.0.254 which is by the Hub-GW since it has the shortest path of both.
+
+![WVD_Path_Result](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/WVD_Path_Result.png)
+
+It would be nice to experiment the other BGP attributes to better understand how they work and when to use them.
