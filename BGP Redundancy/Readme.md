@@ -179,7 +179,7 @@ csr01v(config-router)#neighbor 10.10.0.254 route-map WVD_Prepend in
 
 - Result of the command
 
-Below we can notice that the length of the path through 10.10.0.254 bas been increased and the next-hop has been changed. Now the best route to 200.0.0.0/16 goes through 172.16.0.254 which is by the Hub-GW since it has the shortest path of both.
+Below we can notice that the length of the path through 10.10.0.254 bas been increased and the next-hop has been changed. Now the best route to 200.0.0.0/16 goes through 172.16.0.254 which is the Hub-GW since it now has the shortest path of both.
 
 ![WVD_Path_Result](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/WVD_Path_Result.png)
 
