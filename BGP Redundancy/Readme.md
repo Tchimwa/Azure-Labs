@@ -1,8 +1,8 @@
 # Redundancy and Path control with BGP
 
-With the advent of the cloud, we've been finding more enterprises with virtual private connections from their on-premises infrastructure to their cloud environment. To minimize or avoid the downtime which can result to lost revenue and probably lost of customers, most of the enterprises find important and critical to have a redundant connectivity to their cloud environment. Despite the fact that it can be costly and complex, redundancy will be essential to keep the connectivity always UP. When it comes to path control, depending on the applications ran in their network, some companies choose to have different path for different type of traffic especially for less latency and better efficiency.
+With the advent of the cloud, we've been finding more enterprises with virtual private connections from their on-premises infrastructure to their cloud environment. To minimize or avoid the downtime which can result to lost revenue and probably lost of customers, most of the enterprises find important and critical to have a redundant connectivity to their cloud environment. Despite the fact that it can be costly and complex, redundancy will be essential to keep the connectivity always UP. When it comes to path control, depending on the applications ran in their network and for less latency and better efficiency, some companies choose to have different paths for each type of traffic.
 
-In this lab, we will have 4 VNETs: one simulating the customer's environment on-premises, a Hub and spoke VNETs on one region, and another one as a branch VNET on a different region. The Hub and  Spoke Vnets will be peered together with a VPN Gateway on the Hub Vnet. The Hub and the Branch will be connected using a Vnet-to-Vnet connection with BGP and  the On-premises Vnet will be connected to the Hub and the Branch Vnets using a Site-to-site VPN connection with BGP as well. We'll see how the redundancy has been implemented to access each of the regions, and different case scenarios of path control totally dependent of the customer.
+In this lab, we will have 4 VNETs: one simulating the customer's environment on-premises, a Hub and spoke VNETs on one region, and another one as a branch VNET on a different region. The Hub and  Spoke Vnets will be peered together with a VPN Gateway on the Hub Vnet. The Hub and the Branch will be connected using a Vnet-to-Vnet connection with BGP and  the On-premises Vnet will be connected to the Hub and the Branch Vnets using a Site-to-site VPN connection with BGP as well. We'll see how the redundancy has been implemented to access each of the regions, and a case scenario of path control based on the customer's requirements.
 
 ## Prerequisites
 
@@ -159,7 +159,7 @@ az network vpn-connection create --name WVD-to-Branch --vnet-gateway1 $WVDId --v
 
 The path control will be implemented on the Cisco router csr01v hosted on-premises for both traffic path, for demonstration we will be using different BDP attributes to accomplish it.
 
-From csr01v, we can see that the route to join 200.0.0.0/16  is currently through Branch-GW which has 10.10.0.254 as peer address. Based on AS_PATH, The router actually chooses that path because it has the shortest path to get to WVD, it is only one AS (65020) away.
+From csr01v, we can see that the route to join 200.0.0.0/16  is currently through Branch-GW which has 10.10.0.254 as peer address. Based on AS_PATH, the router actually chooses that path because it has the shortest path to get to WVD, it is only an AS (65020) away from the destination.
 
 ![WVD_Current_Route](https://github.com/Tchimwa/Azure-Labs/blob/main/BGP%20Redundancy/images/WVD_Current_Route.png)
 
