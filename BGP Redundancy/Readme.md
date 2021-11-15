@@ -85,33 +85,33 @@ Default value for routes learned through BGP is 0, 32768 if the route was advert
 
 ### Local Preference
 
-**Description:**Well-known Discretionary so it is recognized, and might or might not be included in BGP Update, non-transitive
+**Description:** Well-known Discretionary so it is recognized, and might or might not be included in BGP Update, non-transitive
 Default value is 100
 **Preference:** Highest
 
 ### Locally Originated
 
-**Description:**Optional, non-transitive
+**Description:** Optional, non-transitive
 **Preference:** Prefer self-originated prefix (with next hop 0.0.0.0 ) over same prefix we learn from neighbor
 
 ### AS_PATH
 
-**Description:**Well-known, Mandatory so it has to be included in the BGP update, transitive ( inter-AS)
+**Description:** Well-known, Mandatory so it has to be included in the BGP update, transitive ( inter-AS)
 Can do inbound or outbound for all Well-known, Mandatory attributes
 **Preference:** Prefer shortest path
 
 ### Origin
 
-**Description:**Well-known, Mandatory so it has to be included in the BGP update, transitive ( inter-AS)
-**Preference:**Lowest (IGP) -  IGP (i) is better Redistributed/incomplete(?)
+**Description:** Well-known, Mandatory so it has to be included in the BGP update, transitive ( inter-AS)
+**Preference:** Lowest (IGP) -  IGP (i) is better Redistributed/incomplete(?)
 IGP(i):  Prefixes learned internally through the AS by iBGP or added using the network command
 
 ### MED
 
-**Description:**Optional, non-transitive
+**Description:** Optional, non-transitive
 Attribute exchanged between eBGP Peers to inform the external peers of the entry point of the AS
 Default value is 0
-**Preference:**Lowest
+**Preference:** Lowest
 
 ### BGP AD - Path Type
 
@@ -121,7 +121,7 @@ Default value is 0
 ### Router-ID
 
 **Description:** BGP uses router-id to identify its peers
-**Preference:**Path with lowest router-id is preferred
+**Preference:** Path with lowest router-id is preferred
 
 ### Case scenario
 
