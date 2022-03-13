@@ -38,7 +38,6 @@ az network route-table route create --name Hub-rte --resource-group csr-rg --rou
 az network route-table route create --name Spoke-rte --resource-group csr-rg --route-table-name OnPrem-RT --address-prefix 100.0.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 192.168.1.4
 az network route-table route create --name Branch-rte --resource-group csr-rg --route-table-name OnPrem-RT --address-prefix 10.10.0.0/16 --next-hop-type VirtualAppliance --next-hop-ip-address 192.168.1.4
 az network vnet subnet update --name VM --vnet-name On-premises --resource-group csr-rg --route-table OnPrem-RT
-az network vnet subnet update --name Inside --vnet-name On-premises --resource-group csr-rg --route-table OnPrem-RT
 
 # Creation of the Azure VNETs
 
